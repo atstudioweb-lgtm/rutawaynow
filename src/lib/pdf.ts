@@ -18,6 +18,7 @@ const HEADER_HEIGHT = 118;
 const BOTTOM_MARGIN = 44;
 
 type PdfStrings = Messages["pdf"];
+type CategoryLabels = Record<string, string>;
 
 function formatPdf(
   template: string,
@@ -164,6 +165,7 @@ export function generateChecklistPdf(
   checklist: Checklist,
   checkedByCategory?: number[][],
   strings?: PdfStrings,
+  categoryLabels?: CategoryLabels,
 ): void {
   const s = strings ?? pt.pdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
@@ -227,9 +229,14 @@ export function generateChecklistPdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...INDIGO);
-    doc.text(categoria.categoria.toUpperCase(), MARGIN + 14, y + 7, {
-      baseline: "top",
-    });
+    doc.text(
+      (categoryLabels?.[categoria.categoria] ?? categoria.categoria).toUpperCase(),
+      MARGIN + 14,
+      y + 7,
+      {
+        baseline: "top",
+      },
+    );
     y += 28 + 14;
 
     categoria.itens.forEach((item, itemIndex) => {

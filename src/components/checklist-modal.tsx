@@ -58,7 +58,7 @@ export function ChecklistModal({
           checkedItems.has(itemKey(categoria.categoria, categoria.itens[itemIndex])),
         ),
     );
-    generateChecklistPdf(checklist, checkedByCategory, messages.pdf);
+    generateChecklistPdf(checklist, checkedByCategory, messages.pdf, categoryLabels);
     setDownloaded(true);
     window.setTimeout(() => onClose(), 1600);
   };
