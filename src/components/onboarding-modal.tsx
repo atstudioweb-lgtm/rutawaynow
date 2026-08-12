@@ -7,6 +7,7 @@ import { generateTripPdf } from "@/lib/pdf";
 import { useI18n } from "@/i18n/provider";
 import type {
   BudgetLevel,
+  GerarRoteiroInput,
   Roteiro,
   TripResult,
 } from "@/types/itinerary";
@@ -182,6 +183,20 @@ export function OnboardingModal({
     );
   };
 
+  const buildInput = (): GerarRoteiroInput => ({
+    destination: destination.trim(),
+    days,
+    month: month ?? "",
+    budget: (budget ?? "medio") as BudgetLevel,
+    adults,
+    teens,
+    children,
+    styles: styles.map(
+      (id) => styleOptions.find((style) => style.id === id)?.label ?? id,
+    ),
+    lang,
+  });
+
   const handleGenerate = async () => {
     if (!canGenerate || generating) return;
 
@@ -192,19 +207,7 @@ export function OnboardingModal({
       const response = await fetch("/api/itinerary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destination: destination.trim(),
-          days,
-          month,
-          budget,
-          adults,
-          teens,
-          children,
-          styles: styles.map(
-            (id) => styleOptions.find((style) => style.id === id)?.label,
-          ),
-          lang,
-        }),
+        body: JSON.stringify(buildInput()),
       });
 
       const data = (await response.json()) as Roteiro & { error?: string };
@@ -261,6 +264,9 @@ export function OnboardingModal({
             (id) =>
               styleOptions.find((style) => style.id === id)?.label ?? id,
           ),
+          input: buildInput(),
+          styleIds: [...styles],
+          monthIndex: month ? months.indexOf(month) : -1,
         },
         lang,
       ),
@@ -419,10 +425,12 @@ export function OnboardingModal({
                         budget: (budget ?? "medio") as BudgetLevel,
                         styles: styles.map(
                           (id) =>
-                            styleOptions.find(
-                              (style) => style.id === id,
-                            )?.label ?? id,
+                            styleOptions.find((style) => style.id === id)
+                              ?.label ?? id,
                         ),
+                        input: buildInput(),
+                        styleIds: [...styles],
+                        monthIndex: month ? months.indexOf(month) : -1,
                       });
                     }
                     onClose();

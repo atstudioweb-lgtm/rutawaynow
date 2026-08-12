@@ -21,6 +21,10 @@ export const en: Messages = {
     invite: "Invite",
     checklist: "Checklist",
     checklistTooltip: "Generate checklist for the current itinerary",
+    regenerateTitle:
+      "This itinerary was generated in {from}. Generate it again in {to}?",
+    regenerateButton: "Generate again",
+    regenerateDismiss: "Not now",
   },
   onboarding: {
     planTrip: "Plan a trip",

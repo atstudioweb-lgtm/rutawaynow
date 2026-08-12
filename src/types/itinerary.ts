@@ -50,6 +50,9 @@ export type TripResult = {
   travelers: number;
   budget: BudgetLevel;
   styles: string[];
+  input: GerarRoteiroInput;
+  styleIds: string[];
+  monthIndex: number;
 };
 
 export type ChecklistCategoria = {

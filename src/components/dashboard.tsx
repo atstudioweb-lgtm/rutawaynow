@@ -10,7 +10,13 @@ import { TripMap } from "@/components/trip-map";
 import { getSampleTrip, mapTripResult } from "@/data/trip";
 import { generateTripPdf } from "@/lib/pdf";
 import { useI18n } from "@/i18n/provider";
-import type { Checklist, TripResult } from "@/types/itinerary";
+import { LANGUAGES } from "@/i18n/languages";
+import type {
+  Checklist,
+  GerarRoteiroInput,
+  Roteiro,
+  TripResult,
+} from "@/types/itinerary";
 
 const FAVORITES_KEY = "rutawaynow-favorites";
 
@@ -48,6 +54,9 @@ export function Dashboard() {
     Record<string, number[]>
   >(loadFavorites);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [generatedLang, setGeneratedLang] = useState<"pt" | "en" | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const activeTrip = useMemo(
     () => (tripResult ? mapTripResult(tripResult, lang) : getSampleTrip(lang)),
@@ -74,8 +83,9 @@ export function Dashboard() {
       ? selectedActivityId
       : null;
 
-  const handleGenerated = (result: TripResult) => {
+  const applyTripResult = (result: TripResult) => {
     setTripResult(result);
+    setGeneratedLang(result.input.lang);
     setSelectedDayId(result.roteiro.dias[0]?.dia ?? null);
     setSelectedActivityId(null);
     setChecklist(null);
@@ -84,6 +94,68 @@ export function Dashboard() {
     setCheckedChecklistItems(new Set());
     setShowFavoritesOnly(false);
   };
+
+  const handleGenerated = (result: TripResult) => {
+    applyTripResult(result);
+  };
+
+  const handleRegenerate = async () => {
+    const current = tripResult;
+    if (!current || isRegenerating) return;
+
+    const styleOptions = messages.onboarding
+      .styleOptions as Record<string, { label: string }>;
+    const styleLabels = current.styleIds.map(
+      (id) => styleOptions[id]?.label ?? id,
+    );
+    const monthLabel =
+      current.monthIndex >= 0
+        ? (messages.onboarding.months[current.monthIndex] ?? current.input.month)
+        : current.input.month;
+
+    const input: GerarRoteiroInput = {
+      ...current.input,
+      month: monthLabel,
+      styles: styleLabels,
+      lang,
+    };
+
+    setRegenerateError(null);
+    setIsRegenerating(true);
+
+    try {
+      const response = await fetch("/api/itinerary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+
+      const data = (await response.json()) as (Roteiro & { error?: string }) | null;
+
+      if (!response.ok || !data) {
+        throw new Error(
+          data?.error ?? t("errors.generateRoteiro"),
+        );
+      }
+
+      applyTripResult({
+        ...current,
+        roteiro: data,
+        month: monthLabel,
+        styles: styleLabels,
+        input,
+      });
+    } catch (err) {
+      setRegenerateError(
+        err instanceof Error ? err.message : t("errors.generateRoteiro"),
+      );
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const languageLabel = (code: string) =>
+    LANGUAGES.find((option) => option.code === code)?.label ?? code;
 
   const handleToggleFavorite = (id: number) => {
     setFavoritesByTrip((current) => {
@@ -218,6 +290,56 @@ export function Dashboard() {
           </span>
         </div>
       </header>
+
+      {tripResult && generatedLang && generatedLang !== lang && (
+        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-indigo-900">
+              {t("dashboard.regenerateTitle", {
+                from: languageLabel(generatedLang),
+                to: languageLabel(lang),
+              })}
+            </p>
+            {regenerateError && (
+              <p className="mt-1 flex items-start gap-1.5 text-xs text-rose-600">
+                <Icon name="close" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {regenerateError}
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+            >
+              {isRegenerating ? (
+                <>
+                  <span
+                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    aria-hidden="true"
+                  />
+                  {t("common.generating")}
+                </>
+              ) : (
+                <>
+                  <Icon name="sparkles" className="h-4 w-4" />
+                  {t("dashboard.regenerateButton")}
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setGeneratedLang(lang)}
+              disabled={isRegenerating}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+            >
+              {t("dashboard.regenerateDismiss")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
