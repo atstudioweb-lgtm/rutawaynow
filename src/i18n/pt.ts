@@ -19,10 +19,8 @@ export const pt = {
     invite: "Convidar",
     checklist: "Checklist",
     checklistTooltip: "Gerar checklist do roteiro atual",
-    regenerateTitle:
-      "Este roteiro foi gerado em {from}. Quer gerar novamente em {to}?",
-    regenerateButton: "Gerar novamente",
-    regenerateDismiss: "Agora não",
+    regeneratingTitle:
+      "Regenerando seu roteiro em {to}… (gerado originalmente em {from}).",
   },
   onboarding: {
     planTrip: "Planejar viagem",

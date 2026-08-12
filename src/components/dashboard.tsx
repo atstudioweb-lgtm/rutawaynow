@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { ChecklistModal } from "@/components/checklist-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -152,7 +152,15 @@ export function Dashboard() {
     } finally {
       setIsRegenerating(false);
     }
-  };
+   };
+
+  useEffect(() => {
+    if (tripResult && generatedLang && generatedLang !== lang) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void handleRegenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   const languageLabel = (code: string) =>
     LANGUAGES.find((option) => option.code === code)?.label ?? code;
@@ -292,52 +300,28 @@ export function Dashboard() {
       </header>
 
       {tripResult && generatedLang && generatedLang !== lang && (
-        <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 sm:flex-row sm:items-center">
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-indigo-900">
-              {t("dashboard.regenerateTitle", {
-                from: languageLabel(generatedLang),
-                to: languageLabel(lang),
-              })}
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-indigo-200 bg-indigo-50 p-4 gap-3">
+          <p className="text-sm font-semibold text-indigo-900 flex-1">
+            {t("dashboard.regeneratingTitle", {
+              from: languageLabel(generatedLang),
+              to: languageLabel(lang),
+            })}
+          </p>
+          {isRegenerating ? (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700">
+              <span
+                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-400/40 border-t-indigo-600"
+                aria-hidden="true"
+              />
+              {t("common.generating")}
+            </span>
+          ) : null}
+          {regenerateError && (
+            <p className="mt-1 flex items-start gap-1.5 text-xs text-rose-600">
+              <Icon name="close" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              {regenerateError}
             </p>
-            {regenerateError && (
-              <p className="mt-1 flex items-start gap-1.5 text-xs text-rose-600">
-                <Icon name="close" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {regenerateError}
-              </p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRegenerate}
-              disabled={isRegenerating}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-            >
-              {isRegenerating ? (
-                <>
-                  <span
-                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
-                    aria-hidden="true"
-                  />
-                  {t("common.generating")}
-                </>
-              ) : (
-                <>
-                  <Icon name="sparkles" className="h-4 w-4" />
-                  {t("dashboard.regenerateButton")}
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setGeneratedLang(lang)}
-              disabled={isRegenerating}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
-            >
-              {t("dashboard.regenerateDismiss")}
-            </button>
-          </div>
+          )}
         </div>
       )}
 
