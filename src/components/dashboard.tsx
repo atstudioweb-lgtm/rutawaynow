@@ -13,7 +13,6 @@ import { useI18n } from "@/i18n/provider";
 import { LANGUAGES } from "@/i18n/languages";
 import type {
   Checklist,
-  GerarRoteiroInput,
   Roteiro,
   TripResult,
 } from "@/types/itinerary";
@@ -99,35 +98,18 @@ export function Dashboard() {
     applyTripResult(result);
   };
 
-  const handleRegenerate = async () => {
+  const handleTranslate = async () => {
     const current = tripResult;
     if (!current || isRegenerating) return;
-
-    const styleOptions = messages.onboarding
-      .styleOptions as Record<string, { label: string }>;
-    const styleLabels = current.styleIds.map(
-      (id) => styleOptions[id]?.label ?? id,
-    );
-    const monthLabel =
-      current.monthIndex >= 0
-        ? (messages.onboarding.months[current.monthIndex] ?? current.input.month)
-        : current.input.month;
-
-    const input: GerarRoteiroInput = {
-      ...current.input,
-      month: monthLabel,
-      styles: styleLabels,
-      lang,
-    };
 
     setRegenerateError(null);
     setIsRegenerating(true);
 
     try {
-      const response = await fetch("/api/itinerary", {
+      const response = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ roteiro: current.roteiro, lang }),
       });
 
       const data = (await response.json()) as (Roteiro & { error?: string }) | null;
@@ -141,9 +123,7 @@ export function Dashboard() {
       applyTripResult({
         ...current,
         roteiro: data,
-        month: monthLabel,
-        styles: styleLabels,
-        input,
+        input: { ...current.input, lang },
       });
     } catch (err) {
       setRegenerateError(
@@ -157,7 +137,7 @@ export function Dashboard() {
   useEffect(() => {
     if (tripResult && generatedLang && generatedLang !== lang) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      void handleRegenerate();
+      void handleTranslate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
@@ -302,7 +282,7 @@ export function Dashboard() {
       {tripResult && generatedLang && generatedLang !== lang && (
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-indigo-200 bg-indigo-50 p-4 gap-3">
           <p className="text-sm font-semibold text-indigo-900 flex-1">
-            {t("dashboard.regeneratingTitle", {
+            {t("dashboard.translatingTitle", {
               from: languageLabel(generatedLang),
               to: languageLabel(lang),
             })}

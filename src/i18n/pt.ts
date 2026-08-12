@@ -19,8 +19,8 @@ export const pt = {
     invite: "Convidar",
     checklist: "Checklist",
     checklistTooltip: "Gerar checklist do roteiro atual",
-    regeneratingTitle:
-      "Regenerando seu roteiro em {to}… (gerado originalmente em {from}).",
+    translatingTitle:
+      "Traduzindo seu roteiro para {to}… (gerado originalmente em {from}).",
   },
   onboarding: {
     planTrip: "Planejar viagem",
