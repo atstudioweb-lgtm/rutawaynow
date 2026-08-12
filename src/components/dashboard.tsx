@@ -58,8 +58,8 @@ export function Dashboard() {
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const activeTrip = useMemo(
-    () => (tripResult ? mapTripResult(tripResult, lang) : getSampleTrip(lang)),
-    [tripResult, lang],
+    () => (tripResult ? mapTripResult(tripResult, lang, messages) : getSampleTrip(lang)),
+    [tripResult, lang, messages],
   );
 
   const tripKey = activeTrip.title;
@@ -198,10 +198,16 @@ export function Dashboard() {
   const handleGenerateChecklist = async () => {
     if (isGeneratingChecklist) return;
 
+    const months = messages.onboarding.months as string[];
+    const translatedMonth =
+      tripResult && tripResult.monthIndex >= 0 && tripResult.monthIndex < months.length
+        ? months[tripResult.monthIndex]
+        : tripResult?.month ?? activeTrip.dates;
+
     const checklistSource = tripResult
       ? {
           destination: tripResult.destination,
-          month: tripResult.month,
+          month: translatedMonth,
           lang,
         }
       : {

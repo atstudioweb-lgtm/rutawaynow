@@ -1,6 +1,7 @@
 import type { IconName } from "@/components/icons";
 import type { TripResult } from "@/types/itinerary";
 import type { Language } from "@/i18n/languages";
+import type { Messages } from "@/i18n/pt";
 
 export type Activity = {
   id: number;
@@ -48,11 +49,24 @@ const categoriaIcons: Record<string, IconName> = {
 export function mapTripResult(
   result: TripResult,
   lang: Language = "pt",
+  messages: Messages = {} as Messages,
 ): Trip {
   const dayWord = lang === "en" ? "Day" : "Dia";
   const daysWord = lang === "en" ? "days" : "dias";
   const dayOneWord = lang === "en" ? "day" : "dia";
   const inWord = lang === "en" ? "in" : "em";
+  const months = (messages.onboarding?.months ?? []) as string[];
+  const styleOptions = (messages.onboarding?.styleOptions ??
+    {}) as Record<string, { label: string }>;
+
+  const monthLabel =
+    result.monthIndex >= 0 && result.monthIndex < months.length
+      ? months[result.monthIndex]
+      : result.month;
+  const styleLabels = result.styleIds
+    .map((id) => styleOptions[id]?.label ?? id)
+    .join(", ");
+
   let idCounter = 1;
   const days: TripDay[] = result.roteiro.dias.map((dia) => ({
     id: dia.dia,
@@ -71,10 +85,10 @@ export function mapTripResult(
 
   return {
     title: result.destination,
-    subtitle: `${result.month} · ${result.styles.join(", ")}`,
+    subtitle: `${monthLabel} · ${styleLabels}`,
     dates: `${result.days} ${
       result.days === 1 ? dayOneWord : daysWord
-    } ${inWord} ${result.month}`,
+    } ${inWord} ${monthLabel}`,
     travelers: result.travelers,
     budget: "",
     rating: 0,
