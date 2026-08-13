@@ -115,7 +115,7 @@ export async function POST(request: Request) {
         `[translate] Gemini responded ${response.status}: ${errorText}`,
       );
       return NextResponse.json(
-        { error: errors.geminiFailed },
+        { error: errors.geminiFailed, detail: errorText },
         { status: 502 },
       );
     }
