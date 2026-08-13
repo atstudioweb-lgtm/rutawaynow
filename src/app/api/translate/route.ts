@@ -1,55 +1,34 @@
 import { NextResponse } from "next/server";
-import type { ApiLang, Roteiro } from "@/types/itinerary";
+import type {
+  ApiLang,
+  Atracao,
+  DiaRoteiro,
+  Roteiro,
+} from "@/types/itinerary";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const DEEPL_API_URL = "https://api-free.deepl.com/v1/translate";
 const API_LANGS: ApiLang[] = ["pt", "en"];
+const DEEPL_TARGET: Record<ApiLang, string> = {
+  pt: "PT-BR",
+  en: "EN-US",
+};
 
 type TranslateInput = {
   roteiro: Roteiro;
   lang: ApiLang;
 };
 
-const SYSTEM_PROMPTS: Record<ApiLang, string> = {
-  pt: `Você é um especialista em tradução de viagens do aplicativo "RutawayNow".
-Sua tarefa é traduzir os textos do roteiro para o português do Brasil, mantendo a estrutura JSON exata e todos os valores não-textuais (horários, coordenadas, categorias) inalterados.
-
-REGRAS OBRIGATÓRIAS:
-1. Responda ESTRITAMENTE em JSON estruturado, sem markdown, sem blocos de código, sem texto extra antes ou depois.
-2. Mantenha a estrutura JSON idêntica à entrada: "destino", "latitude", "longitude", "dias" → "dia", "titulo", "atracoes" → "horario", "nome_da_atracao", "descricao_curta", "categoria", "latitude", "longitude".
-3. Traduza para português do Brasil apenas os campos de texto: "destino", "titulo", "nome_da_atracao" e "descricao_curta".
-4. NÃO traduza: "horario", "categoria", "latitude", "longitude", "dia".
-5. NÃO traduza nomes próprios de lugares, atrações, bairros, praias, restaurantes ou hotéis: mantenha os nomes originais (ex.: "Praia Mole", "Ilha do Campeche").
-6. Mantenha os valores numéricos (latitude/longitude/dia) exatamente como estão.
-7. A categoria deve permanecer como na entrada (não traduzir).`,
-  en: `You are a travel translation expert for the "RutawayNow" app.
-Your task is to translate the itinerary texts to English, keeping the exact JSON structure and all non-textual values (times, coordinates, categories) unchanged.
-
-MANDATORY RULES:
-1. Respond STRICTLY with structured JSON, no markdown, no code blocks, no extra text before or after.
-2. Keep the JSON structure identical to the input: "destino", "latitude", "longitude", "dias" → "dia", "titulo", "atracoes" → "horario", "nome_da_atracao", "descricao_curta", "categoria", "latitude", "longitude".
-3. Translate to English only the text fields: "destino", "titulo", "nome_da_atracao" and "descricao_curta".
-4. DO NOT translate: "horario", "categoria", "latitude", "longitude", "dia".
-5. DO NOT translate proper nouns of places, attractions, neighborhoods, beaches, restaurants or hotels: keep the original names (e.g. "Praia Mole", "Ilha do Campeche").
-6. Keep the numeric values (latitude/longitude/dia) exactly as they are.
-7. The category should remain as in the input (not translated).`,
-};
-
-
 const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
     roteiroRequired: "O roteiro é obrigatório.",
-    apiKeyMissing: "GEMINI_API_KEY não está configurada no ambiente.",
-    geminiFailed: "Falha ao traduzir o roteiro. Tente novamente em instantes.",
-    noValidItinerary: "O Gemini não retornou um roteiro válido.",
+    apiKeyMissing: "DEEPL_API_KEY não está configurada no ambiente.",
+    translationFailed: "Falha ao traduzir o roteiro. Tente novamente em instantes.",
     unexpected: "Erro inesperado ao traduzir o roteiro.",
   },
   en: {
     roteiroRequired: "The itinerary is required.",
-    apiKeyMissing: "GEMINI_API_KEY is not configured in the environment.",
-    geminiFailed: "Failed to translate the itinerary. Please try again in a moment.",
-    noValidItinerary: "Gemini did not return a valid itinerary.",
+    apiKeyMissing: "DEEPL_API_KEY is not configured in the environment.",
+    translationFailed: "Failed to translate the itinerary. Please try again in a moment.",
     unexpected: "Unexpected error while translating the itinerary.",
   },
 };
@@ -75,64 +54,38 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.DEEPL_API_KEY) {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
     );
   }
 
-  const userPrompt = `Traduza os textos do seguinte roteiro para ${lang === "pt" ? "português do Brasil" : "inglês"}, mantendo a estrutura JSON exata e todos os valores numéricos, horários e categorias inalterados. Não traduza nomes próprios. Retorne APENAS o JSON:\n\n${JSON.stringify(roteiro, null, 2)}`;
+  const targetLang = DEEPL_TARGET[lang];
 
   try {
-    const model = process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPTS[lang] }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            responseMimeType: "application/json",
-          },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        `[translate] Gemini responded ${response.status}: ${errorText}`,
-      );
-      return NextResponse.json(
-        { error: errors.geminiFailed },
-        { status: 502 },
-      );
-    }
-
-    const data = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    const translated: Roteiro = {
+      destino: await translateText(roteiro.destino),
+      latitude: roteiro.latitude,
+      longitude: roteiro.longitude,
+      dias: await Promise.all(
+        roteiro.dias.map(async (dia: DiaRoteiro): Promise<DiaRoteiro> => ({
+          dia: dia.dia,
+          titulo: await translateText(dia.titulo),
+          atracoes: await Promise.all(
+            dia.atracoes.map(async (atracao: Atracao): Promise<Atracao> => ({
+              horario: atracao.horario,
+              nome_da_atracao: await translateText(atracao.nome_da_atracao),
+              descricao_curta: await translateText(atracao.descricao_curta),
+              categoria: atracao.categoria,
+              latitude: atracao.latitude,
+              longitude: atracao.longitude,
+            })),
+          ),
+        })),
+      ),
     };
 
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!content) {
-      return NextResponse.json(
-        { error: errors.noValidItinerary },
-        { status: 502 },
-      );
-    }
-
-    const translated = JSON.parse(content) as Roteiro;
     return NextResponse.json(translated);
   } catch (error) {
     console.error("[translate] Erro inesperado:", error);
@@ -140,5 +93,26 @@ export async function POST(request: Request) {
       { error: errors.unexpected },
       { status: 500 },
     );
+  }
+
+  async function translateText(text: string): Promise<string> {
+    const response = await fetch(`${DEEPL_API_URL}?auth_key=${process.env.DEEPL_API_KEY}&text=${encodeURIComponent(text)}&target_lang=${targetLang}`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepL API error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as {
+      translations?: { text: string }[];
+    };
+
+    const translated = data.translations?.[0]?.text;
+    if (!translated) {
+      throw new Error("No translation returned");
+    }
+
+    return translated;
   }
 }
