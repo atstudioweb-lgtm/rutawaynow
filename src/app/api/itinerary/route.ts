@@ -7,7 +7,7 @@ import type {
 } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek/deepseek-v3-chat:free";
+const DEFAULT_MODEL = "openrouter/free";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
@@ -297,8 +297,8 @@ export async function POST(request: Request) {
 
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
-      return NextResponse.json(
-        { error: errors.noValidItinerary },
+       return NextResponse.json(
+        { error: errors.apiFailed, detail: errorText },
         { status: 502 },
       );
     }
