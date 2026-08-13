@@ -34,30 +34,6 @@ MANDATORY RULES:
 6. Keep the order and number of items per category exactly as in the input.`,
 };
 
-const translateChecklistSchema = {
-  type: "object",
-  properties: {
-    destino: { type: "string" },
-    periodo: { type: "string" },
-    categorias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          categoria: { type: "string" },
-          itens: {
-            type: "array",
-            items: { type: "string" },
-          },
-        },
-        required: ["categoria", "itens"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["destino", "periodo", "categorias"],
-  additionalProperties: false,
-};
 
 const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
@@ -128,7 +104,6 @@ export async function POST(request: Request) {
           generationConfig: {
             temperature: 0.3,
             responseMimeType: "application/json",
-            responseJsonSchema: translateChecklistSchema,
           },
         }),
       },

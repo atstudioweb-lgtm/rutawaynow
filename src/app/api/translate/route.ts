@@ -36,51 +36,6 @@ MANDATORY RULES:
 7. The category should remain as in the input (not translated).`,
 };
 
-const translateSchema = {
-  type: "object",
-  properties: {
-    destino: { type: "string" },
-    latitude: { type: "number" },
-    longitude: { type: "number" },
-    dias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          dia: { type: "integer" },
-          titulo: { type: "string" },
-          atracoes: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                horario: { type: "string" },
-                nome_da_atracao: { type: "string" },
-                descricao_curta: { type: "string" },
-                categoria: { type: "string" },
-                latitude: { type: "number" },
-                longitude: { type: "number" },
-              },
-              required: [
-                "horario",
-                "nome_da_atracao",
-                "descricao_curta",
-                "categoria",
-                "latitude",
-                "longitude",
-              ],
-              additionalProperties: false,
-            },
-          },
-        },
-        required: ["dia", "titulo", "atracoes"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["destino", "latitude", "longitude", "dias"],
-  additionalProperties: false,
-};
 
 const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
@@ -149,7 +104,6 @@ export async function POST(request: Request) {
           generationConfig: {
             temperature: 0.3,
             responseMimeType: "application/json",
-            responseJsonSchema: translateSchema,
           },
         }),
       },
