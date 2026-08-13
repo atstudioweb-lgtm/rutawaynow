@@ -42,8 +42,10 @@ export function Dashboard() {
     null,
   );
   const [checklist, setChecklist] = useState<Checklist | null>(null);
+  const [checklistLang, setChecklistLang] = useState<"pt" | "en" | null>(null);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
+  const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
   const [checklistError, setChecklistError] = useState<string | null>(null);
   const [checkedChecklistItems, setCheckedChecklistItems] = useState<
     Set<string>
@@ -88,6 +90,7 @@ export function Dashboard() {
     setSelectedDayId(result.roteiro.dias[0]?.dia ?? null);
     setSelectedActivityId(null);
     setChecklist(null);
+    setChecklistLang(null);
     setChecklistOpen(false);
     setChecklistError(null);
     setCheckedChecklistItems(new Set());
@@ -245,6 +248,7 @@ export function Dashboard() {
           ),
       );
       setChecklist(data);
+      setChecklistLang(lang);
       setChecklistOpen(true);
     } catch (err) {
       setChecklistError(
@@ -254,6 +258,70 @@ export function Dashboard() {
       setIsGeneratingChecklist(false);
     }
   };
+
+  const handleTranslateChecklist = async () => {
+    const current = checklist;
+    if (!current || isTranslatingChecklist) return;
+
+    setChecklistError(null);
+    setIsTranslatingChecklist(true);
+
+    // Preserve checked state by position before translation
+    const checkedByPosition: boolean[][] = current.categorias.map((categoria) =>
+      categoria.itens.map(() => false),
+    );
+    current.categorias.forEach((categoria, catIdx) => {
+      categoria.itens.forEach((item, itemIdx) => {
+        if (checkedChecklistItems.has(`${categoria.categoria}::${item}`)) {
+          checkedByPosition[catIdx][itemIdx] = true;
+        }
+      });
+    });
+
+    try {
+      const response = await fetch("/api/translate-checklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checklist: current, lang }),
+      });
+
+      const data = (await response.json()) as (Checklist & { error?: string }) | null;
+
+      if (!response.ok || !data) {
+        throw new Error(
+          data?.error ?? t("errors.generateChecklist"),
+        );
+      }
+
+      // Rebuild checked items set from positions with new translated text
+      const newChecked = new Set<string>();
+      data.categorias.forEach((categoria, catIdx) => {
+        categoria.itens.forEach((item, itemIdx) => {
+          if (checkedByPosition[catIdx]?.[itemIdx]) {
+            newChecked.add(`${categoria.categoria}::${item}`);
+          }
+        });
+      });
+
+      setChecklist(data);
+      setChecklistLang(lang);
+      setCheckedChecklistItems(newChecked);
+    } catch (err) {
+      setChecklistError(
+        err instanceof Error ? err.message : t("errors.generateChecklist"),
+      );
+    } finally {
+      setIsTranslatingChecklist(false);
+    }
+  };
+
+  useEffect(() => {
+    if (checklist && checklistLang && checklistLang !== lang) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void handleTranslateChecklist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-10 sm:px-6 lg:px-8">
