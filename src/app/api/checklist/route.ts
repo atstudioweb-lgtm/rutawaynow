@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek-v4-flash";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_MODEL = "meta-llama/llama-3.2-3b-instruct:free";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -80,7 +80,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
     destinationRequired: "O destino é obrigatório.",
     monthRequired: "O período da viagem é obrigatório.",
-    apiKeyMissing: "DEEPSEEK_API_KEY não está configurada no ambiente.",
+    apiKeyMissing: "OPENROUTER_API_KEY não está configurada no ambiente.",
     apiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
     noValidChecklist: "A API não retornou um checklist válido.",
     unexpected: "Erro inesperado ao gerar o checklist.",
@@ -88,7 +88,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   en: {
     destinationRequired: "Destination is required.",
     monthRequired: "Travel period is required.",
-    apiKeyMissing: "DEEPSEEK_API_KEY is not configured in the environment.",
+    apiKeyMissing: "OPENROUTER_API_KEY is not configured in the environment.",
     apiFailed:
       "Failed to generate the checklist. Please try again in a moment.",
     noValidChecklist: "The API did not return a valid checklist.",
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.monthRequired }, { status: 400 });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
@@ -132,12 +132,12 @@ export async function POST(request: Request) {
   const userPrompt = USER_PROMPTS[lang]({ destination, month });
 
   try {
-    const model = process.env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
+    const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
       body: JSON.stringify({
         model,
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[checklist] DeepSeek responded ${response.status}: ${errorText}`,
+        `[checklist] OpenRouter responded ${response.status}: ${errorText}`,
       );
       return NextResponse.json(
         { error: errors.apiFailed },
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
 
     if (data.error) {
       console.error(
-        `[checklist] DeepSeek error: ${data.error.message}`,
+        `[checklist] OpenRouter error: ${data.error.message}`,
       );
       return NextResponse.json(
         { error: errors.apiFailed },

@@ -6,8 +6,8 @@ import type {
   Roteiro,
 } from "@/types/itinerary";
 
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek-v4-flash";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_MODEL = "meta-llama/llama-3.2-3b-instruct:free";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
@@ -139,7 +139,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "As quantidades de adultos (mín. 1), adolescentes e crianças devem ser números inteiros entre 0 e 50.",
     budgetInvalid: "O orçamento deve ser 'baixo', 'medio' ou 'alto'.",
     stylesRequired: "Escolha pelo menos um estilo de viagem.",
-    apiKeyMissing: "DEEPSEEK_API_KEY não está configurada no ambiente.",
+    apiKeyMissing: "OPENROUTER_API_KEY não está configurada no ambiente.",
     apiFailed: "Falha ao gerar o roteiro. Tente novamente em instantes.",
     noValidItinerary: "A API não retornou um roteiro válido.",
     unexpected: "Erro inesperado ao gerar o roteiro.",
@@ -152,7 +152,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "Counts of adults (min. 1), teens and children must be integers between 0 and 50.",
     budgetInvalid: "Budget must be 'baixo', 'medio' or 'alto'.",
     stylesRequired: "Choose at least one travel style.",
-    apiKeyMissing: "DEEPSEEK_API_KEY is not configured in the environment.",
+    apiKeyMissing: "OPENROUTER_API_KEY is not configured in the environment.",
     apiFailed: "Failed to generate the itinerary. Please try again in a moment.",
     noValidItinerary: "The API did not return a valid itinerary.",
     unexpected: "Unexpected error while generating the itinerary.",
@@ -226,7 +226,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.stylesRequired }, { status: 400 });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
@@ -245,12 +245,12 @@ export async function POST(request: Request) {
   });
 
   try {
-    const model = process.env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
+    const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
       body: JSON.stringify({
         model,
@@ -272,7 +272,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[itinerary] DeepSeek responded ${response.status}: ${errorText}`,
+        `[itinerary] OpenRouter responded ${response.status}: ${errorText}`,
       );
       return NextResponse.json(
         { error: errors.apiFailed },
@@ -287,7 +287,7 @@ export async function POST(request: Request) {
 
     if (data.error) {
       console.error(
-        `[itinerary] DeepSeek error: ${data.error.message}`,
+        `[itinerary] OpenRouter error: ${data.error.message}`,
       );
       return NextResponse.json(
         { error: errors.apiFailed },
