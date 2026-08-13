@@ -6,33 +6,10 @@ import type {
   Roteiro,
 } from "@/types/itinerary";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+const DEFAULT_MODEL = "deepseek-v4-flash";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
-
-const ITINERARY_JSON_FORMAT = `{
-  "destino": "<destino>",
-  "latitude": <número decimal>,
-  "longitude": <número decimal>,
-  "dias": [
-    {
-      "dia": 1,
-      "titulo": "<título resumido do dia>",
-      "atracoes": [
-        {
-          "horario": "HH:MM",
-          "nome_da_atracao": "...",
-          "descricao_curta": "...",
-          "categoria": "...",
-          "latitude": <número decimal>,
-          "longitude": <número decimal>
-        }
-      ]
-    }
-  ]
-}`;
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
   pt: `Você é um especialista em planejamento de viagens do aplicativo "RutawayNow".
@@ -56,7 +33,27 @@ REGRAS OBRIGATÓRIAS:
 14. As coordenadas devem variar entre as atrações para refletir locais diferentes no mapa.
 
 Retorne APENAS o objeto JSON no formato abaixo:
-${ITINERARY_JSON_FORMAT}`,
+{
+  "destino": "<destino>",
+  "latitude": <número decimal>,
+  "longitude": <número decimal>,
+  "dias": [
+    {
+      "dia": 1,
+      "titulo": "<título resumido do dia>",
+      "atracoes": [
+        {
+          "horario": "HH:MM",
+          "nome_da_atracao": "...",
+          "descricao_curta": "...",
+          "categoria": "...",
+          "latitude": <número decimal>,
+          "longitude": <número decimal>
+        }
+      ]
+    }
+  ]
+}`,
   en: `You are a travel planning expert for the "RutawayNow" app.
 
 Your task is to create a detailed daily itinerary for the trip requested by the user.
@@ -78,7 +75,27 @@ MANDATORY RULES:
 14. Coordinates must vary between attractions to reflect different places on the map.
 
 Return ONLY the JSON object in the format below:
-${ITINERARY_JSON_FORMAT}`,
+{
+  "destino": "<destino>",
+  "latitude": <decimal number>,
+  "longitude": <decimal number>,
+  "dias": [
+    {
+      "dia": 1,
+      "titulo": "<short title of the day>",
+      "atracoes": [
+        {
+          "horario": "HH:MM",
+          "nome_da_atracao": "...",
+          "descricao_curta": "...",
+          "categoria": "...",
+          "latitude": <decimal number>,
+          "longitude": <decimal number>
+        }
+      ]
+    }
+  ]
+}`,
 };
 
 const USER_PROMPTS: Record<
@@ -122,9 +139,9 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "As quantidades de adultos (mín. 1), adolescentes e crianças devem ser números inteiros entre 0 e 50.",
     budgetInvalid: "O orçamento deve ser 'baixo', 'medio' ou 'alto'.",
     stylesRequired: "Escolha pelo menos um estilo de viagem.",
-    apiKeyMissing: "GEMINI_API_KEY não está configurada no ambiente.",
-    geminiFailed: "Falha ao gerar o roteiro. Tente novamente em instantes.",
-    noValidItinerary: "O Gemini não retornou um roteiro válido.",
+    apiKeyMissing: "DEEPSEEK_API_KEY não está configurada no ambiente.",
+    apiFailed: "Falha ao gerar o roteiro. Tente novamente em instantes.",
+    noValidItinerary: "A API não retornou um roteiro válido.",
     unexpected: "Erro inesperado ao gerar o roteiro.",
   },
   en: {
@@ -135,58 +152,11 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "Counts of adults (min. 1), teens and children must be integers between 0 and 50.",
     budgetInvalid: "Budget must be 'baixo', 'medio' or 'alto'.",
     stylesRequired: "Choose at least one travel style.",
-    apiKeyMissing: "GEMINI_API_KEY is not configured in the environment.",
-    geminiFailed:
-      "Failed to generate the itinerary. Please try again in a moment.",
-    noValidItinerary: "Gemini did not return a valid itinerary.",
+    apiKeyMissing: "DEEPSEEK_API_KEY is not configured in the environment.",
+    apiFailed: "Failed to generate the itinerary. Please try again in a moment.",
+    noValidItinerary: "The API did not return a valid itinerary.",
     unexpected: "Unexpected error while generating the itinerary.",
   },
-};
-
-const itinerarySchema = {
-  type: "object",
-  properties: {
-    destino: { type: "string" },
-    latitude: { type: "number" },
-    longitude: { type: "number" },
-    dias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          dia: { type: "integer" },
-          titulo: { type: "string" },
-          atracoes: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                horario: { type: "string" },
-                nome_da_atracao: { type: "string" },
-                descricao_curta: { type: "string" },
-                categoria: { type: "string" },
-                latitude: { type: "number" },
-                longitude: { type: "number" },
-              },
-              required: [
-                "horario",
-                "nome_da_atracao",
-                "descricao_curta",
-                "categoria",
-                "latitude",
-                "longitude",
-              ],
-              additionalProperties: false,
-            },
-          },
-        },
-        required: ["dia", "titulo", "atracoes"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["destino", "latitude", "longitude", "dias"],
-  additionalProperties: false,
 };
 
 export async function POST(request: Request) {
@@ -256,7 +226,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.stylesRequired }, { status: 400 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.DEEPSEEK_API_KEY) {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
@@ -275,47 +245,57 @@ export async function POST(request: Request) {
   });
 
   try {
-    const model = process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPTS[lang] }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            responseMimeType: "application/json",
-            responseJsonSchema: itinerarySchema,
-          },
-        }),
+    const model = process.env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
+    const response = await fetch(DEEPSEEK_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
-    );
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPTS[lang],
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[itinerary] Gemini respondeu ${response.status}: ${errorText}`,
+        `[itinerary] DeepSeek responded ${response.status}: ${errorText}`,
       );
       return NextResponse.json(
-        { error: errors.geminiFailed },
+        { error: errors.apiFailed },
         { status: 502 },
       );
     }
 
     const data = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      choices?: { message?: { content?: string } }[];
+      error?: { message?: string };
     };
 
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (data.error) {
+      console.error(
+        `[itinerary] DeepSeek error: ${data.error.message}`,
+      );
+      return NextResponse.json(
+        { error: errors.apiFailed },
+        { status: 502 },
+      );
+    }
+
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidItinerary },

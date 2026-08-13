@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+const DEFAULT_MODEL = "deepseek-v4-flash";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -81,45 +80,20 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
     destinationRequired: "O destino é obrigatório.",
     monthRequired: "O período da viagem é obrigatório.",
-    apiKeyMissing: "GEMINI_API_KEY não está configurada no ambiente.",
-    geminiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
-    noValidChecklist: "O Gemini não retornou um checklist válido.",
+    apiKeyMissing: "DEEPSEEK_API_KEY não está configurada no ambiente.",
+    apiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
+    noValidChecklist: "A API não retornou um checklist válido.",
     unexpected: "Erro inesperado ao gerar o checklist.",
   },
   en: {
     destinationRequired: "Destination is required.",
     monthRequired: "Travel period is required.",
-    apiKeyMissing: "GEMINI_API_KEY is not configured in the environment.",
-    geminiFailed:
+    apiKeyMissing: "DEEPSEEK_API_KEY is not configured in the environment.",
+    apiFailed:
       "Failed to generate the checklist. Please try again in a moment.",
-    noValidChecklist: "Gemini did not return a valid checklist.",
+    noValidChecklist: "The API did not return a valid checklist.",
     unexpected: "Unexpected error while generating the checklist.",
   },
-};
-
-const checklistSchema = {
-  type: "object",
-  properties: {
-    destino: { type: "string" },
-    periodo: { type: "string" },
-    categorias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          categoria: { type: "string" },
-          itens: {
-            type: "array",
-            items: { type: "string" },
-          },
-        },
-        required: ["categoria", "itens"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["destino", "periodo", "categorias"],
-  additionalProperties: false,
 };
 
 export async function POST(request: Request) {
@@ -148,7 +122,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.monthRequired }, { status: 400 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.DEEPSEEK_API_KEY) {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
@@ -158,47 +132,57 @@ export async function POST(request: Request) {
   const userPrompt = USER_PROMPTS[lang]({ destination, month });
 
   try {
-    const model = process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPTS[lang] }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.5,
-            responseMimeType: "application/json",
-            responseJsonSchema: checklistSchema,
-          },
-        }),
+    const model = process.env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
+    const response = await fetch(DEEPSEEK_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
-    );
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPTS[lang],
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.5,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[checklist] Gemini respondeu ${response.status}: ${errorText}`,
+        `[checklist] DeepSeek responded ${response.status}: ${errorText}`,
       );
       return NextResponse.json(
-        { error: errors.geminiFailed },
+        { error: errors.apiFailed },
         { status: 502 },
       );
     }
 
     const data = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      choices?: { message?: { content?: string } }[];
+      error?: { message?: string };
     };
 
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (data.error) {
+      console.error(
+        `[checklist] DeepSeek error: ${data.error.message}`,
+      );
+      return NextResponse.json(
+        { error: errors.apiFailed },
+        { status: 502 },
+      );
+    }
+
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidChecklist },
