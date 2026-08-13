@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "meta-llama/llama-3.2-3b-instruct:free";
+const DEFAULT_MODEL = "deepseek/deepseek-v3-chat:free";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
