@@ -290,15 +290,15 @@ export async function POST(request: Request) {
         `[itinerary] OpenRouter error: ${data.error.message}`,
       );
       return NextResponse.json(
-        { error: errors.apiFailed },
+        { error: errors.apiFailed, detail: data.error.message },
         { status: 502 },
       );
     }
 
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
-       return NextResponse.json(
-        { error: errors.apiFailed, detail: errorText },
+      return NextResponse.json(
+        { error: errors.noValidItinerary },
         { status: 502 },
       );
     }
@@ -308,7 +308,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[itinerary] Erro inesperado:", error);
     return NextResponse.json(
-      { error: errors.unexpected },
+      { error: errors.unexpected, detail: error instanceof Error ? error.message : String(error) },
       { status: 500 },
     );
   }
