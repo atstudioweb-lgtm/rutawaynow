@@ -89,15 +89,15 @@ export function Dashboard() {
     setGeneratedLang(result.input.lang);
     setSelectedDayId(result.roteiro.dias[0]?.dia ?? null);
     setSelectedActivityId(null);
-    setChecklist(null);
-    setChecklistLang(null);
     setChecklistOpen(false);
-    setChecklistError(null);
-    setCheckedChecklistItems(new Set());
     setShowFavoritesOnly(false);
   };
 
   const handleGenerated = (result: TripResult) => {
+    setChecklist(null);
+    setChecklistLang(null);
+    setChecklistError(null);
+    setCheckedChecklistItems(new Set());
     applyTripResult(result);
   };
 
