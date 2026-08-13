@@ -6,7 +6,7 @@ import type {
   Roteiro,
 } from "@/types/itinerary";
 
-const DEEPL_API_URL = "https://api-free.deepl.com/v1/translate";
+const DEEPL_API_URL = "https://api-free.deepl.com/v2/translate";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 const DEEPL_TARGET: Record<ApiLang, string> = {
   pt: "PT-BR",
@@ -96,11 +96,21 @@ export async function POST(request: Request) {
   }
 
   async function translateText(text: string): Promise<string> {
-    const response = await fetch(`${DEEPL_API_URL}?auth_key=${process.env.DEEPL_API_KEY}&text=${encodeURIComponent(text)}&target_lang=${targetLang}`, {
+    const response = await fetch(DEEPL_API_URL, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
+      },
+      body: JSON.stringify({
+        text: [text],
+        target_lang: targetLang,
+      }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[translate] DeepL responded ${response.status}: ${errorText}`);
       throw new Error(`DeepL API error: ${response.status}`);
     }
 
