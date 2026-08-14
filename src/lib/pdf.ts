@@ -137,18 +137,24 @@ export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...SLATE);
-    doc.text(titleLines, MARGIN + timeWidth + 12, y, { baseline: "top" });
+    titleLines.forEach((line, i) => {
+      doc.text(line, MARGIN + timeWidth + 12, y + i * 12, { baseline: "top" });
+    });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(...MUTED);
-    doc.text(descLines, MARGIN + timeWidth + 12, y + 15, { baseline: "top" });
+    descLines.forEach((line, i) => {
+      doc.text(line, MARGIN + timeWidth + 12, y + 15 + i * 12, { baseline: "top" });
+    });
 
     if (extraLines.length > 0) {
       doc.setFontSize(8);
       doc.setTextColor(...INDIGO);
-      doc.text(extraLines, MARGIN + timeWidth + 12, y + 18 + Math.max(descLines.length, titleLines.length) * 12, {
-        baseline: "top",
+      extraLines.forEach((line, i) => {
+        doc.text(line, MARGIN + timeWidth + 12, y + 18 + Math.max(descLines.length, titleLines.length) * 12 + i * 11, {
+          baseline: "top",
+        });
       });
     }
 
