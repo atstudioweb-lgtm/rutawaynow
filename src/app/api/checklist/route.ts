@@ -3,8 +3,8 @@ import { extractJson } from "@/utils/extractJson";
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
-const MANGAI_API_URL = "https://api.mangaai.mangoi.in/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek-r1";
+const FREEAI_API_URL = "https://api.free.ai/v1/chat/completions";
+const DEFAULT_MODEL = "qwen7b";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -129,8 +129,8 @@ export async function POST(request: Request) {
   const userPrompt = USER_PROMPTS[lang]({ destination, month });
 
   try {
-    const model = process.env.MANGAI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetchWithRetry(MANGAI_API_URL, {
+    const model = process.env.FREEAI_MODEL ?? DEFAULT_MODEL;
+    const response = await fetchWithRetry(FREEAI_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[checklist] Mangaai responded ${response.status}: ${errorText}`,
+        `[checklist] Free.ai responded ${response.status}: ${errorText}`,
       );
       if (response.status === 429 || response.errorType === "rate_limit") {
         return NextResponse.json(
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
     };
 
     if (data.error) {
-      console.error(`[checklist] Mangaai error: ${data.error.message}`);
+      console.error(`[checklist] Free.ai error: ${data.error.message}`);
       return NextResponse.json(
         { error: errors.apiFailed },
         { status: 502 },

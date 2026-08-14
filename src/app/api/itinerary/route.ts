@@ -8,8 +8,8 @@ import type {
   Roteiro,
 } from "@/types/itinerary";
 
-const MANGAI_API_URL = "https://api.mangaai.mangoi.in/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek-r1";
+const FREEAI_API_URL = "https://api.free.ai/v1/chat/completions";
+const DEFAULT_MODEL = "qwen7b";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
@@ -257,8 +257,8 @@ export async function POST(request: Request) {
   });
 
   try {
-    const model = process.env.MANGAI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetchWithRetry(MANGAI_API_URL, {
+    const model = process.env.FREEAI_MODEL ?? DEFAULT_MODEL;
+    const response = await fetchWithRetry(FREEAI_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -282,7 +282,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[itinerary] Mangaai responded ${response.status}: ${errorText}`,
+        `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
       if (response.status === 429 || response.errorType === "rate_limit") {
         return NextResponse.json(
@@ -302,7 +302,7 @@ export async function POST(request: Request) {
     };
 
     if (data.error) {
-      console.error(`[itinerary] Mangaai error: ${data.error.message}`);
+      console.error(`[itinerary] Free.ai error: ${data.error.message}`);
       return NextResponse.json(
         { error: errors.apiFailed },
         { status: 502 },
