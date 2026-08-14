@@ -8,7 +8,7 @@ import type {
 } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek/deepseek-r1:free";
+const DEFAULT_MODEL = "openrouter/free";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
@@ -275,7 +275,7 @@ export async function POST(request: Request) {
         `[itinerary] OpenRouter responded ${response.status}: ${errorText}`,
       );
      return NextResponse.json(
-        { error: errors.apiFailed, detail: errorText.substring(0, 500) },
+        { error: errors.apiFailed },
         { status: 502 },
       );
     }
