@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { I18nProvider } from "@/i18n/provider";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${inter.variable} antialiased`}>
       <body className="min-h-dvh flex flex-col bg-slate-50 font-sans text-slate-900">
         <I18nProvider>{children}</I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
