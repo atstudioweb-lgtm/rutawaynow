@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { extractJson } from "@/utils/extractJson";
+import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -82,6 +83,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
     destinationRequired: "O destino é obrigatório.",
     monthRequired: "O período da viagem é obrigatório.",
     apiKeyMissing: "OPENROUTER_API_KEY não está configurada no ambiente.",
+    rateLimitExceeded: "Limite de requisições ao modelo gratuito excedido. Aguarde alguns minutos e tente novamente.",
     apiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
     noValidChecklist: "A API não retornou um checklist válido.",
     unexpected: "Erro inesperado ao gerar o checklist.",
@@ -90,6 +92,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
     destinationRequired: "Destination is required.",
     monthRequired: "Travel period is required.",
     apiKeyMissing: "OPENROUTER_API_KEY is not configured in the environment.",
+    rateLimitExceeded: "Free model rate limit exceeded. Please wait a few minutes and try again.",
     apiFailed:
       "Failed to generate the checklist. Please try again in a moment.",
     noValidChecklist: "The API did not return a valid checklist.",
@@ -134,7 +137,7 @@ export async function POST(request: Request) {
 
   try {
     const model = process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetchWithRetry(OPENROUTER_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -161,6 +164,12 @@ export async function POST(request: Request) {
       console.error(
         `[checklist] OpenRouter responded ${response.status}: ${errorText}`,
       );
+      if (response.status === 429 || response.errorType === "rate_limit") {
+        return NextResponse.json(
+          { error: errors.rateLimitExceeded },
+          { status: 429 },
+        );
+      }
       return NextResponse.json(
         { error: errors.apiFailed },
         { status: 502 },

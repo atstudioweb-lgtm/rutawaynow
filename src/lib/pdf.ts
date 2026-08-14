@@ -111,7 +111,21 @@ export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
       textMax,
     ) as string[];
     const titleLines = doc.splitTextToSize(activity.title, textMax) as string[];
-    const rowHeight = 16 + Math.max(descLines.length, titleLines.length) * 12 + 12;
+
+    const extraLines: string[] = [];
+    if (activity.duration) extraLines.push(`⏱ ${activity.duration}`);
+    if (activity.cost) extraLines.push(`💰 ${activity.cost}`);
+    if (activity.openingHours) extraLines.push(`🕒 ${activity.openingHours}`);
+    if (activity.tip) extraLines.push(`💡 ${activity.tip}`);
+    if (activity.lat != null && activity.lng != null) {
+      extraLines.push(`📍 ${activity.lat}, ${activity.lng}`);
+    }
+
+    const extraHeight = extraLines.length > 0
+      ? extraLines.length * 11 + 8
+      : 0;
+
+    const rowHeight = 16 + Math.max(descLines.length, titleLines.length) * 12 + 12 + extraHeight;
 
     ensureSpace(rowHeight);
 
@@ -129,6 +143,14 @@ export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
     doc.setFontSize(9.5);
     doc.setTextColor(...MUTED);
     doc.text(descLines, MARGIN + timeWidth + 12, y + 15, { baseline: "top" });
+
+    if (extraLines.length > 0) {
+      doc.setFontSize(8);
+      doc.setTextColor(...INDIGO);
+      doc.text(extraLines, MARGIN + timeWidth + 12, y + 18 + Math.max(descLines.length, titleLines.length) * 12, {
+        baseline: "top",
+      });
+    }
 
     y += rowHeight;
   };
