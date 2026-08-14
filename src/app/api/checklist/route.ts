@@ -124,13 +124,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.monthRequired }, { status: 400 });
   }
 
-  // Mangaai doesn't require API key, but keep env var check
-  if (!process.env.MANGAI_API_KEY && process.env.MANGAI_API_KEY !== "") {
-    return NextResponse.json(
-      { error: errors.apiKeyMissing },
-      { status: 500 },
-    );
-  }
+  // Mangaai doesn't require API key
 
   const userPrompt = USER_PROMPTS[lang]({ destination, month });
 
