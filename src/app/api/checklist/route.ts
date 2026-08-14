@@ -190,7 +190,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const checklist = JSON.parse(extractJson(content)) as Checklist;
+    let checklist: Checklist;
+    try {
+      checklist = JSON.parse(extractJson(content)) as Checklist;
+    } catch {
+      console.error("[checklist] JSON parse failed, raw content:", content.substring(0, 500));
+      return NextResponse.json(
+        { error: errors.noValidChecklist },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json(checklist);
   } catch (error) {
     console.error("[checklist] Erro inesperado:", error);
