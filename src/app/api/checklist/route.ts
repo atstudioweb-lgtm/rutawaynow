@@ -152,7 +152,6 @@ export async function POST(request: Request) {
             content: userPrompt,
           },
         ],
-        response_format: { type: "json_object" },
         temperature: 0.5,
       }),
     });
