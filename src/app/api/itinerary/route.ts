@@ -298,17 +298,29 @@ export async function POST(request: Request) {
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
-        { error: errors.noValidItinerary },
+        { error: errors.noValidItinerary, detail: "No content in response" },
         { status: 502 },
       );
     }
 
-    const itinerary = JSON.parse(content) as Roteiro;
-    return NextResponse.json(itinerary);
+     try {
+      const itinerary = JSON.parse(content) as Roteiro;
+      return NextResponse.json(itinerary);
+    } catch (parseError) {
+      console.error("[itinerary] JSON parse error:", parseError);
+      console.error("[itinerary] Raw content:", content.substring(0, 500));
+      return NextResponse.json(
+        { error: errors.unexpected, detail: `JSON parse error: ${content.substring(0, 200)}` },
+        { status: 500 },
+      );
+    }
   } catch (error) {
     console.error("[itinerary] Erro inesperado:", error);
     return NextResponse.json(
-      { error: errors.unexpected, detail: error instanceof Error ? error.message : String(error) },
+      {
+        error: errors.unexpected,
+        detail: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }
