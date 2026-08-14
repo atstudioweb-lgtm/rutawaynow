@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { extractJson } from "@/utils/extractJson";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek/deepseek-v3-chat:free";
+const DEFAULT_MODEL = "openrouter/free";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -151,7 +152,6 @@ export async function POST(request: Request) {
             content: userPrompt,
           },
         ],
-        response_format: { type: "json_object" },
         temperature: 0.5,
       }),
     });
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const checklist = JSON.parse(content) as Checklist;
+    const checklist = JSON.parse(extractJson(content)) as Checklist;
     return NextResponse.json(checklist);
   } catch (error) {
     console.error("[checklist] Erro inesperado:", error);

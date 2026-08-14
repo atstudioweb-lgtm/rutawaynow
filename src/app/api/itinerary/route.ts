@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { extractJson } from "@/utils/extractJson";
 import type {
   ApiLang,
   BudgetLevel,
@@ -264,7 +265,6 @@ export async function POST(request: Request) {
             content: userPrompt,
           },
         ],
-        response_format: { type: "json_object" },
         temperature: 0.7,
       }),
     });
@@ -303,7 +303,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const itinerary = JSON.parse(content) as Roteiro;
+    const itinerary = JSON.parse(extractJson(content)) as Roteiro;
     return NextResponse.json(itinerary);
   } catch (error) {
     console.error("[itinerary] Erro inesperado:", error);
