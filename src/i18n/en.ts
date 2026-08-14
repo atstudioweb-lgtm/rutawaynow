@@ -129,9 +129,10 @@ export const en: Messages = {
     unfavorite: "Remove from favorites",
     favoritesOnlyHint: "Showing only your favorite activities.",
     favoritesEmpty:
-      "You haven't favorited any activities yet. Tap the heart to save them.",
+      "You haven't favorited any activities yet. Tap the heart to save.",
     showAll: "Show all",
     clearFavorites: "Clear favorites",
+    link: "Link",
   },
   map: {
     ariaLabel: "Itinerary map",

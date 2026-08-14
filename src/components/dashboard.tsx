@@ -325,9 +325,8 @@ export function Dashboard() {
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     if (checklist && checklistLang && checklistLang !== lang) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       void handleTranslateChecklist();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

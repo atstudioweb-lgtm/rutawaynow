@@ -211,28 +211,58 @@ export function Timeline({
                                   className="h-4.5 w-4.5"
                                 />
                               </span>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-2 pr-16">
-                                  <h3 className="text-sm font-semibold text-slate-900">
-                                    {activity.title}
-                                  </h3>
-                                </div>
-                                <p className="mt-0.5 text-sm leading-relaxed text-slate-500">
-                                  {activity.description}
-                                </p>
-                                <span
-                                  className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition ${
-                                    activitySelected
-                                      ? "bg-indigo-600 text-white"
-                                      : "bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-700"
-                                  }`}
-                                >
-                                  <Icon name="mapPin" className="h-3 w-3" />
-                                  {activitySelected
-                                    ? t("timeline.onMap")
-                                    : t("timeline.viewOnMap")}
-                                </span>
-                              </div>
+                               <div className="min-w-0 flex-1">
+                                 <div className="flex items-start justify-between gap-2 pr-16">
+                                   <h3 className="text-sm font-semibold text-slate-900">
+                                     {activity.title}
+                                   </h3>
+                                 </div>
+                                 <p className="mt-0.5 text-sm leading-relaxed text-slate-500">
+                                   {activity.description}
+                                 </p>
+                                 {activity.lat != null && activity.lng != null && (
+                                   <p className="mt-1 text-[11px] text-slate-400">
+                                     📍 {activity.lat}, {activity.lng}
+                                   </p>
+                                 )}
+                                 {(activity.duration || activity.cost || activity.openingHours) && (
+                                   <div className="mt-1.5 flex flex-wrap gap-3 text-[10px] text-slate-400">
+                                     {activity.duration && <span>⏱ {activity.duration}</span>}
+                                     {activity.cost && <span>💰 {activity.cost}</span>}
+                                     {activity.openingHours && <span>🕒 {activity.openingHours}</span>}
+                                   </div>
+                                 )}
+                                 {activity.link && (
+                                   <p className="mt-1 text-[11px]">
+                                     <a
+                                       href={activity.link}
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       className="text-indigo-600 underline"
+                                     >
+                                       🔗 {t("timeline.link")}
+                                     </a>
+                                   </p>
+                                 )}
+                                 {activity.phone && (
+                                   <p className="mt-1 text-[11px] text-slate-400">📞 {activity.phone}</p>
+                                 )}
+                                 {activity.tip && (
+                                   <p className="mt-1.5 text-[10px] text-amber-600">💡 {activity.tip}</p>
+                                 )}
+                                 <span
+                                   className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold transition ${
+                                     activitySelected
+                                       ? "bg-indigo-600 text-white"
+                                       : "bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-700"
+                                   }`}
+                                 >
+                                   <Icon name="mapPin" className="h-3 w-3" />
+                                   {activitySelected
+                                     ? t("timeline.onMap")
+                                     : t("timeline.viewOnMap")}
+                                 </span>
+                               </div>
                             </div>
                           </button>
                           <div className="absolute right-2.5 top-2.5 flex items-center gap-1">

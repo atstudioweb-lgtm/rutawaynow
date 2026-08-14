@@ -130,6 +130,7 @@ export const pt = {
       "Você ainda não favoritou nenhuma atividade. Toque no coração para salvar.",
     showAll: "Mostrar todas",
     clearFavorites: "Limpar favoritos",
+    link: "Link",
   },
   map: {
     ariaLabel: "Mapa do roteiro",

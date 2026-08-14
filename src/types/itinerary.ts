@@ -5,6 +5,12 @@ export type Atracao = {
   categoria: string;
   latitude: number;
   longitude: number;
+  duracao?: string;
+  custo_estimado?: string;
+  link?: string;
+  telefone?: string;
+  horario_funcionamento?: string;
+  dicas?: string;
 };
 
 export type DiaRoteiro = {

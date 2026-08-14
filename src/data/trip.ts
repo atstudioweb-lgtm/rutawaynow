@@ -11,6 +11,12 @@ export type Activity = {
   icon: IconName;
   lat?: number;
   lng?: number;
+  duration?: string;
+  cost?: string;
+  link?: string;
+  phone?: string;
+  openingHours?: string;
+  tip?: string;
 };
 
 export type TripDay = {
@@ -72,15 +78,21 @@ export function mapTripResult(
     id: dia.dia,
     label: `${dayWord} ${dia.dia}`,
     date: dia.titulo,
-    activities: dia.atracoes.map((atracao) => ({
-      id: idCounter++,
-      time: atracao.horario,
-      title: atracao.nome_da_atracao,
-      description: atracao.descricao_curta,
-      icon: categoriaIcons[atracao.categoria] ?? "mapPin",
-      lat: atracao.latitude,
-      lng: atracao.longitude,
-    })),
+      activities: dia.atracoes.map((atracao) => ({
+        id: idCounter++,
+        time: atracao.horario,
+        title: atracao.nome_da_atracao,
+        description: atracao.descricao_curta,
+        icon: categoriaIcons[atracao.categoria] ?? "mapPin",
+        lat: atracao.latitude,
+        lng: atracao.longitude,
+        duration: atracao.duracao,
+        cost: atracao.custo_estimado,
+        link: atracao.link,
+        phone: atracao.telefone,
+        openingHours: atracao.horario_funcionamento,
+        tip: atracao.dicas,
+      })),
   }));
 
   return {

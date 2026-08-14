@@ -17,7 +17,7 @@ const SYSTEM_PROMPTS: Record<ApiLang, string> = {
 
 Sua tarefa é criar um roteiro diário detalhado para a viagem solicitada pelo usuário.
 
-REGRAS OBRIGATÓRIAS:
+ REGRAS OBRIGATÓRIAS:
 1. Responda ESTRITAMENTE em JSON estruturado, sem markdown, sem blocos de código, sem texto extra antes ou depois.
 2. O JSON deve conter exatamente um dia para cada dia solicitado de viagem, dentro do array "dias", na ordem cronológica.
 3. Cada dia deve ter um array "atracoes" com atividades/atrações preenchidas para todos os horários do dia.
@@ -32,6 +32,7 @@ REGRAS OBRIGATÓRIAS:
 12. Considere a quantidade de adultos, adolescentes e crianças do grupo, adequando o ritmo do roteiro e garantindo atrações adequadas a todas as idades.
 13. Inclua coordenadas geográficas reais aproximadas (latitude e longitude, valores decimais) para o destino e para cada atração, consistentes com a região do local.
 14. As coordenadas devem variar entre as atrações para refletir locais diferentes no mapa.
+15. Inclua os seguintes campos adicionais para cada atração: "duracao" (ex: "2 horas"), "custo_estimado" (ex: "R$ 50 por pessoa"), "link" (site oficial ou página, se disponível), "telefone" (contato, se disponível), "horario_funcionamento" (horário de abertura/fechamento), "dicas" (dica prática curta).
 
 Retorne APENAS o objeto JSON no formato abaixo:
 {
@@ -49,7 +50,13 @@ Retorne APENAS o objeto JSON no formato abaixo:
           "descricao_curta": "...",
           "categoria": "...",
           "latitude": <número decimal>,
-          "longitude": <número decimal>
+          "longitude": <número decimal>,
+          "duracao": "...",
+          "custo_estimado": "...",
+          "link": "...",
+          "telefone": "...",
+          "horario_funcionamento": "...",
+          "dicas": "..."
         }
       ]
     }
@@ -74,6 +81,7 @@ MANDATORY RULES:
 12. Consider the number of adults, teens and children in the group, adjusting the pace of the itinerary and ensuring attractions suitable for all ages.
 13. Include approximate real geographic coordinates (latitude and longitude, decimal values) for the destination and each attraction, consistent with the region of the location.
 14. Coordinates must vary between attractions to reflect different places on the map.
+15. Include the following extra fields for each attraction: "duracao" (e.g. "2 hours"), "custo_estimado" (e.g. "R$ 50 per person"), "link" (official website URL if available), "telefone" (contact phone if available), "horario_funcionamento" (opening hours), "dicas" (short practical tip).
 
 Return ONLY the JSON object in the format below:
 {
@@ -91,7 +99,13 @@ Return ONLY the JSON object in the format below:
           "descricao_curta": "...",
           "categoria": "...",
           "latitude": <decimal number>,
-          "longitude": <decimal number>
+          "longitude": <decimal number>,
+          "duracao": "...",
+          "custo_estimado": "...",
+          "link": "...",
+          "telefone": "...",
+          "horario_funcionamento": "...",
+          "dicas": "..."
         }
       ]
     }

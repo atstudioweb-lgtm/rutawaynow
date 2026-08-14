@@ -365,13 +365,13 @@ export function OnboardingModal({
                         {t("onboarding.dayLabel", { n: dia.dia })}
                         {dia.titulo ? ` · ${dia.titulo}` : ""}
                       </p>
-                      <ul className="mt-2 space-y-2">
+                      <ul className="mt-2 space-y-3">
                         {dia.atracoes.map((atracao, index) => (
                           <li key={index} className="flex items-start gap-2.5">
                             <span className="mt-0.5 shrink-0 rounded-md bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 tabular-nums ring-1 ring-slate-200">
                               {atracao.horario}
                             </span>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <p className="text-sm font-semibold text-slate-900">
                                   {atracao.nome_da_atracao}
@@ -384,6 +384,36 @@ export function OnboardingModal({
                               <p className="text-xs text-slate-500">
                                 {atracao.descricao_curta}
                               </p>
+                              <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] text-slate-400">
+                                {atracao.duracao && (
+                                  <span>⏱ {atracao.duracao}</span>
+                                )}
+                                {atracao.custo_estimado && (
+                                  <span>💰 {atracao.custo_estimado}</span>
+                                )}
+                                {atracao.horario_funcionamento && (
+                                  <span>🕒 {atracao.horario_funcionamento}</span>
+                                )}
+                                {atracao.link && (
+                                  <a
+                                    href={atracao.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline hover:text-indigo-600"
+                                  >
+                                    🔗 {t("timeline.link")}
+                                  </a>
+                                )}
+                                {atracao.telefone && (
+                                  <span>📞 {atracao.telefone}</span>
+                                )}
+                                <span>🗺 {atracao.latitude}, {atracao.longitude}</span>
+                              </div>
+                              {atracao.dicas && (
+                                <p className="mt-1 text-[10px] text-amber-600">
+                                  💡 {atracao.dicas}
+                                </p>
+                              )}
                             </div>
                           </li>
                         ))}
