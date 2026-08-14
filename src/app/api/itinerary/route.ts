@@ -9,7 +9,7 @@ import type {
 } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openrouter/free";
+const DEFAULT_MODEL = "meta-llama/llama-3.2-3b-instruct:free";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
