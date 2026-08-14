@@ -33,6 +33,37 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   },
 };
 
+async function translateBatch(
+  texts: string[],
+  targetLang: string,
+): Promise<string[]> {
+  const response = await fetch(DEEPL_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      auth_key: process.env.DEEPL_API_KEY,
+      text: texts,
+      target_lang: targetLang,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[translate] DeepL responded ${response.status}: ${errorText}`);
+    throw new Error(`DeepL API error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    translations?: { text: string }[];
+  };
+
+  if (!data.translations || data.translations.length !== texts.length) {
+    throw new Error("Translation count mismatch");
+  }
+
+  return data.translations.map((t) => t.text);
+}
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | Partial<TranslateInput>
@@ -64,65 +95,51 @@ export async function POST(request: Request) {
   const targetLang = DEEPL_TARGET[lang];
 
   try {
-    const translated: Roteiro = {
-      destino: await translateText(roteiro.destino),
+    const texts: string[] = [roteiro.destino];
+    const dayTitleIndices: number[] = [];
+    const atracaoRefs: { di: number; ai: number; nomeIdx: number; descIdx: number }[] = [];
+
+    roteiro.dias.forEach((dia, di) => {
+      dayTitleIndices.push(texts.length);
+      texts.push(dia.titulo);
+      dia.atracoes.forEach((atr, ai) => {
+        const nomeIdx = texts.length;
+        texts.push(atr.nome_da_atracao);
+        const descIdx = texts.length;
+        texts.push(atr.descricao_curta);
+        atracaoRefs.push({ di, ai, nomeIdx, descIdx });
+      });
+    });
+
+    const translated = await translateBatch(texts, targetLang);
+
+    const result: Roteiro = {
+      destino: translated[0],
       latitude: roteiro.latitude,
       longitude: roteiro.longitude,
-      dias: await Promise.all(
-        roteiro.dias.map(async (dia: DiaRoteiro): Promise<DiaRoteiro> => ({
-          dia: dia.dia,
-          titulo: await translateText(dia.titulo),
-          atracoes: await Promise.all(
-            dia.atracoes.map(async (atracao: Atracao): Promise<Atracao> => ({
-              horario: atracao.horario,
-              nome_da_atracao: await translateText(atracao.nome_da_atracao),
-              descricao_curta: await translateText(atracao.descricao_curta),
-              categoria: atracao.categoria,
-              latitude: atracao.latitude,
-              longitude: atracao.longitude,
-            })),
-          ),
-        })),
-      ),
+      dias: roteiro.dias.map((dia: DiaRoteiro, di: number): DiaRoteiro => ({
+        dia: dia.dia,
+        titulo: translated[dayTitleIndices[di]],
+        atracoes: dia.atracoes.map((atr: Atracao, ai: number): Atracao => {
+          const ref = atracaoRefs.find((r) => r.di === di && r.ai === ai)!;
+          return {
+            horario: atr.horario,
+            nome_da_atracao: translated[ref.nomeIdx],
+            descricao_curta: translated[ref.descIdx],
+            categoria: atr.categoria,
+            latitude: atr.latitude,
+            longitude: atr.longitude,
+          };
+        }),
+      })),
     };
 
-    return NextResponse.json(translated);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[translate] Erro inesperado:", error);
     return NextResponse.json(
       { error: errors.unexpected },
       { status: 500 },
     );
-  }
-
-  async function translateText(text: string): Promise<string> {
-    const response = await fetch(DEEPL_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: targetLang,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[translate] DeepL responded ${response.status}: ${errorText}`);
-      throw new Error(`DeepL API error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as {
-      translations?: { text: string }[];
-    };
-
-    const translated = data.translations?.[0]?.text;
-    if (!translated) {
-      throw new Error("No translation returned");
-    }
-
-    return translated;
   }
 }

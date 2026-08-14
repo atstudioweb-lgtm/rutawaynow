@@ -28,6 +28,37 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   },
 };
 
+async function translateBatch(
+  texts: string[],
+  targetLang: string,
+): Promise<string[]> {
+  const response = await fetch(DEEPL_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      auth_key: process.env.DEEPL_API_KEY,
+      text: texts,
+      target_lang: targetLang,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[translate-checklist] DeepL responded ${response.status}: ${errorText}`);
+    throw new Error(`DeepL API error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    translations?: { text: string }[];
+  };
+
+  if (!data.translations || data.translations.length !== texts.length) {
+    throw new Error("Translation count mismatch");
+  }
+
+  return data.translations.map((t) => t.text);
+}
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | Partial<TranslateChecklistInput>
@@ -61,58 +92,43 @@ export async function POST(request: Request) {
   const targetLang = DEEPL_TARGET[lang];
 
   try {
-    const translated: Checklist = {
-      destino: await translateText(checklist.destino),
-      periodo: await translateText(checklist.periodo),
-      categorias: await Promise.all(
-        checklist.categorias.map(
-          async (categoria: ChecklistCategoria): Promise<ChecklistCategoria> => ({
-            categoria: categoria.categoria,
-            itens: await Promise.all(
-              categoria.itens.map(async (item: string) => translateText(item)),
-            ),
+    const texts: string[] = [];
+    const itemIndices: { catIndex: number; itemIndex: number; textIndex: number }[] = [];
+
+    texts.push(checklist.destino);
+    texts.push(checklist.periodo);
+
+    checklist.categorias.forEach((cat: ChecklistCategoria, ci) => {
+      cat.itens.forEach((item, ti) => {
+        texts.push(item);
+        itemIndices.push({ catIndex: ci, itemIndex: ti, textIndex: texts.length - 1 });
+      });
+    });
+
+    const translated = await translateBatch(texts, targetLang);
+
+    const result: Checklist = {
+      destino: translated[0],
+      periodo: translated[1],
+      categorias: checklist.categorias.map(
+        (categoria: ChecklistCategoria, ci: number): ChecklistCategoria => ({
+          categoria: categoria.categoria,
+          itens: categoria.itens.map((item: string, ti: number) => {
+            const idx = itemIndices.find(
+              (i) => i.catIndex === ci && i.itemIndex === ti,
+            );
+            return translated[idx!.textIndex];
           }),
-        ),
+        }),
       ),
     };
 
-    return NextResponse.json(translated);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[translate-checklist] Erro inesperado:", error);
     return NextResponse.json(
       { error: errors.unexpected },
       { status: 500 },
     );
-  }
-
-  async function translateText(text: string): Promise<string> {
-    const response = await fetch(DEEPL_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: targetLang,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[translate-checklist] DeepL responded ${response.status}: ${errorText}`);
-      throw new Error(`DeepL API error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as {
-      translations?: { text: string }[];
-    };
-
-    const translated = data.translations?.[0]?.text;
-    if (!translated) {
-      throw new Error("No translation returned");
-    }
-
-    return translated;
   }
 }
