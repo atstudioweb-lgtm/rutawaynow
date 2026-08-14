@@ -113,12 +113,12 @@ export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
     const titleLines = doc.splitTextToSize(activity.title, textMax) as string[];
 
     const extraLines: string[] = [];
-    if (activity.duration) extraLines.push(`⏱ ${activity.duration}`);
-    if (activity.cost) extraLines.push(`💰 ${activity.cost}`);
-    if (activity.openingHours) extraLines.push(`🕒 ${activity.openingHours}`);
-    if (activity.tip) extraLines.push(`💡 ${activity.tip}`);
+    if (activity.duration) extraLines.push(`Duracao: ${activity.duration}`);
+    if (activity.cost) extraLines.push(`Custo: ${activity.cost}`);
+    if (activity.openingHours) extraLines.push(`Horario: ${activity.openingHours}`);
+    if (activity.tip) extraLines.push(`Dica: ${activity.tip}`);
     if (activity.lat != null && activity.lng != null) {
-      extraLines.push(`📍 ${activity.lat}, ${activity.lng}`);
+      extraLines.push(`Local: ${activity.lat}, ${activity.lng}`);
     }
 
     const extraHeight = extraLines.length > 0
