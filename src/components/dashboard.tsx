@@ -201,6 +201,16 @@ export function Dashboard() {
   const handleGenerateChecklist = async () => {
     if (isGeneratingChecklist) return;
 
+    if (checklist && checklistLang && checklistLang !== lang) {
+      void handleTranslateChecklist();
+      return;
+    }
+
+    if (checklist && checklistLang === lang) {
+      setChecklistOpen(true);
+      return;
+    }
+
     const months = messages.onboarding.months as string[];
     const translatedMonth =
       tripResult && tripResult.monthIndex >= 0 && tripResult.monthIndex < months.length
