@@ -306,7 +306,7 @@ export async function POST(request: Request) {
     let itinerary: Roteiro;
     try {
       itinerary = JSON.parse(extractJson(content)) as Roteiro;
-    } catch (parseError) {
+    } catch {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(
         { error: errors.noValidItinerary },
@@ -318,10 +318,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[itinerary] Erro inesperado:", error);
     return NextResponse.json(
-      {
-        error: errors.unexpected,
-        detail: error instanceof Error ? error.message : String(error),
-      },
+      { error: errors.unexpected },
       { status: 500 },
     );
   }
