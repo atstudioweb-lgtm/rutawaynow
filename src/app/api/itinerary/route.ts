@@ -274,8 +274,8 @@ export async function POST(request: Request) {
       console.error(
         `[itinerary] OpenRouter responded ${response.status}: ${errorText}`,
       );
-      return NextResponse.json(
-        { error: errors.apiFailed },
+     return NextResponse.json(
+        { error: errors.apiFailed, detail: errorText.substring(0, 500) },
         { status: 502 },
       );
     }
