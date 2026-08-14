@@ -129,10 +129,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[translate-checklist] Erro inesperado:", error);
     return NextResponse.json(
-      {
-        error: errors.unexpected,
-        detail: error instanceof Error ? error.message : String(error),
-      },
+      { error: errors.unexpected },
       { status: 500 },
     );
   }
