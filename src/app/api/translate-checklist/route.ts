@@ -34,9 +34,11 @@ async function translateBatch(
 ): Promise<string[]> {
   const response = await fetch(DEEPL_API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
+    },
     body: JSON.stringify({
-      auth_key: process.env.DEEPL_API_KEY,
       text: texts,
       target_lang: targetLang,
     }),
