@@ -8,7 +8,7 @@ import type {
 } from "@/types/itinerary";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openrouter/free";
+const DEFAULT_MODEL = "deepseek/deepseek-r1:free";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
@@ -303,7 +303,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const itinerary = JSON.parse(extractJson(content)) as Roteiro;
+    let itinerary: Roteiro;
+    try {
+      itinerary = JSON.parse(extractJson(content)) as Roteiro;
+    } catch (parseError) {
+      console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
+      return NextResponse.json(
+        { error: errors.noValidItinerary },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json(itinerary);
   } catch (error) {
     console.error("[itinerary] Erro inesperado:", error);
