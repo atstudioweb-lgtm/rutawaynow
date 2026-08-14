@@ -99,18 +99,7 @@ export async function POST(request: Request) {
   try {
     const texts: string[] = [roteiro.destino];
     const dayTitleIndices: number[] = [];
-    const atracaoRefs: {
-      di: number;
-      ai: number;
-      nomeIdx: number;
-      descIdx: number;
-      duracaoIdx?: number;
-      custoIdx?: number;
-      linkIdx?: number;
-      telefoneIdx?: number;
-      horarioFuncIdx?: number;
-      dicasIdx?: number;
-    }[] = [];
+    const atracaoRefs: { di: number; ai: number; nomeIdx: number; descIdx: number }[] = [];
 
     roteiro.dias.forEach((dia, di) => {
       dayTitleIndices.push(texts.length);
@@ -120,34 +109,7 @@ export async function POST(request: Request) {
         texts.push(atr.nome_da_atracao);
         const descIdx = texts.length;
         texts.push(atr.descricao_curta);
-        const ref: { di: number; ai: number; nomeIdx: number; descIdx: number; duracaoIdx?: number; custoIdx?: number; linkIdx?: number; telefoneIdx?: number; horarioFuncIdx?: number; dicasIdx?: number } = {
-          di, ai, nomeIdx, descIdx,
-        };
-        if (atr.duracao) {
-          ref.duracaoIdx = texts.length;
-          texts.push(atr.duracao);
-        }
-        if (atr.custo_estimado) {
-          ref.custoIdx = texts.length;
-          texts.push(atr.custo_estimado);
-        }
-        if (atr.link) {
-          ref.linkIdx = texts.length;
-          texts.push(atr.link);
-        }
-        if (atr.telefone) {
-          ref.telefoneIdx = texts.length;
-          texts.push(atr.telefone);
-        }
-        if (atr.horario_funcionamento) {
-          ref.horarioFuncIdx = texts.length;
-          texts.push(atr.horario_funcionamento);
-        }
-        if (atr.dicas) {
-          ref.dicasIdx = texts.length;
-          texts.push(atr.dicas);
-        }
-        atracaoRefs.push(ref);
+        atracaoRefs.push({ di, ai, nomeIdx, descIdx });
       });
     });
 
@@ -169,12 +131,12 @@ export async function POST(request: Request) {
             categoria: atr.categoria,
             latitude: atr.latitude,
             longitude: atr.longitude,
-            duracao: ref.duracaoIdx !== undefined ? translated[ref.duracaoIdx] : undefined,
-            custo_estimado: ref.custoIdx !== undefined ? translated[ref.custoIdx] : undefined,
-            link: ref.linkIdx !== undefined ? translated[ref.linkIdx] : undefined,
-            telefone: ref.telefoneIdx !== undefined ? translated[ref.telefoneIdx] : undefined,
-            horario_funcionamento: ref.horarioFuncIdx !== undefined ? translated[ref.horarioFuncIdx] : undefined,
-            dicas: ref.dicasIdx !== undefined ? translated[ref.dicasIdx] : undefined,
+            duracao: atr.duracao,
+            custo_estimado: atr.custo_estimado,
+            link: atr.link,
+            telefone: atr.telefone,
+            horario_funcionamento: atr.horario_funcionamento,
+            dicas: atr.dicas,
           };
         }),
       })),
