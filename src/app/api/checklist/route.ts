@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { extractJson } from "@/utils/extractJson";
+import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import type { ApiLang, Checklist, GerarChecklistInput } from "@/types/itinerary";
 
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_MODEL = "gemini-1.5-flash";
+const MANGAI_API_URL = "https://api.mangaai.mangoi.in/v1/chat/completions";
+const DEFAULT_MODEL = "deepseek-r1";
 const API_LANGS: ApiLang[] = ["pt", "en"];
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -81,45 +82,20 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
   pt: {
     destinationRequired: "O destino é obrigatório.",
     monthRequired: "O período da viagem é obrigatório.",
-    apiKeyMissing: "GEMINI_API_KEY não está configurada no ambiente.",
-    geminiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
+    apiKeyMissing: "MANGAI_API_KEY não está configurada no ambiente.",
+    apiFailed: "Falha ao gerar o checklist. Tente novamente em instantes.",
     noValidChecklist: "A API não retornou um checklist válido.",
     unexpected: "Erro inesperado ao gerar o checklist.",
   },
   en: {
     destinationRequired: "Destination is required.",
     monthRequired: "Travel period is required.",
-    apiKeyMissing: "GEMINI_API_KEY is not configured in the environment.",
-    geminiFailed:
+    apiKeyMissing: "MANGAI_API_KEY is not configured in the environment.",
+    apiFailed:
       "Failed to generate the checklist. Please try again in a moment.",
     noValidChecklist: "The API did not return a valid checklist.",
     unexpected: "Unexpected error while generating the checklist.",
   },
-};
-
-const checklistSchema = {
-  type: "object",
-  properties: {
-    destino: { type: "string" },
-    periodo: { type: "string" },
-    categorias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          categoria: { type: "string" },
-          itens: {
-            type: "array",
-            items: { type: "string" },
-          },
-        },
-        required: ["categoria", "itens"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["destino", "periodo", "categorias"],
-  additionalProperties: false,
 };
 
 export async function POST(request: Request) {
@@ -148,7 +124,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.monthRequired }, { status: 400 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  // Mangaai doesn't require API key, but keep env var check
+  if (!process.env.MANGAI_API_KEY && process.env.MANGAI_API_KEY !== "") {
     return NextResponse.json(
       { error: errors.apiKeyMissing },
       { status: 500 },
@@ -158,47 +135,59 @@ export async function POST(request: Request) {
   const userPrompt = USER_PROMPTS[lang]({ destination, month });
 
   try {
-    const model = process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPTS[lang] }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.5,
-            responseMimeType: "application/json",
-            responseJsonSchema: checklistSchema,
-          },
-        }),
+    const model = process.env.MANGAI_MODEL ?? DEFAULT_MODEL;
+    const response = await fetchWithRetry(MANGAI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: SYSTEM_PROMPTS[lang],
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        temperature: 0.5,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `[checklist] Gemini respondeu ${response.status}: ${errorText}`,
+        `[checklist] Mangaai responded ${response.status}: ${errorText}`,
       );
+      if (response.status === 429 || response.errorType === "rate_limit") {
+        return NextResponse.json(
+          { error: errors.rateLimitExceeded ?? errors.apiFailed },
+          { status: 429 },
+        );
+      }
       return NextResponse.json(
-        { error: errors.geminiFailed },
+        { error: errors.apiFailed },
         { status: 502 },
       );
     }
 
     const data = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      choices?: { message?: { content?: string } }[];
+      error?: { message?: string };
     };
 
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (data.error) {
+      console.error(`[checklist] Mangaai error: ${data.error.message}`);
+      return NextResponse.json(
+        { error: errors.apiFailed },
+        { status: 502 },
+      );
+    }
+
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidChecklist },
@@ -206,7 +195,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const checklist = JSON.parse(content) as Checklist;
+    let checklist: Checklist;
+    try {
+      checklist = JSON.parse(extractJson(content)) as Checklist;
+    } catch {
+      console.error("[checklist] JSON parse failed, raw content:", content.substring(0, 500));
+      return NextResponse.json(
+        { error: errors.noValidChecklist },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json(checklist);
   } catch (error) {
     console.error("[checklist] Erro inesperado:", error);
