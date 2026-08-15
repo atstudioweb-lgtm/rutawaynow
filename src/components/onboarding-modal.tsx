@@ -252,25 +252,23 @@ export function OnboardingModal({
   const handleDownloadPdf = () => {
     if (!itinerary) return;
     generateTripPdf(
-      mapTripResult(
-        {
-          roteiro: itinerary,
-          destination: destination.trim(),
-          month: month ?? "",
-          days,
-          travelers: totalTravelers,
-          budget: (budget ?? "medio") as BudgetLevel,
-          styles: styles.map(
-            (id) =>
-              styleOptions.find((style) => style.id === id)?.label ?? id,
-          ),
-          input: buildInput(),
-          styleIds: [...styles],
-          monthIndex: month ? months.indexOf(month) : -1,
-        },
-        lang,
-      ),
-      messages.pdf,
+      mapTripResult({
+        roteiro: itinerary,
+        destination: destination.trim(),
+        month: month ?? "",
+        days,
+        travelers: totalTravelers,
+        budget: (budget ?? "medio") as BudgetLevel,
+        styles: styles.map(
+          (id) =>
+            styleOptions.find((style) => style.id === id)?.label ?? id,
+        ),
+        input: buildInput(),
+        styleIds: [...styles],
+        monthIndex: month ? months.indexOf(month) : -1,
+      }),
+      lang,
+      messages,
     );
     setPdfDownloaded(true);
     window.setTimeout(() => setPdfDownloaded(false), 2500);

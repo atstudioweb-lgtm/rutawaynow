@@ -184,7 +184,7 @@ export function Dashboard() {
   const destinationLabel = tripResult?.destination ?? "Florianópolis · SC";
 
   const handleDownloadPdf = () => {
-    generateTripPdf(activeTrip, messages.pdf);
+    generateTripPdf(activeTrip, lang, messages);
     setRoteiroDownloaded(true);
     window.setTimeout(() => setRoteiroDownloaded(false), 2500);
   };

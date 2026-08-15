@@ -172,6 +172,11 @@ export const pt = {
     rating: "Avaliação {value}",
     fileTrip: "roteiro",
     fileChecklist: "checklist",
+    duration: "Duração",
+    cost: "Custo",
+    openingHours: "Horário",
+    tip: "Dica",
+    location: "Local",
   },
   errors: {
     generateRoteiro:

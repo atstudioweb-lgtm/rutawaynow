@@ -1,7 +1,10 @@
 import { jsPDF } from "jspdf";
 import type { Activity, Trip } from "@/data/trip";
 import type { Checklist } from "@/types/itinerary";
-import { pt, type Messages } from "@/i18n/pt";
+import { pt } from "@/i18n/pt";
+import { en } from "@/i18n/en";
+import { type Language } from "@/i18n/languages";
+import type { Messages } from "@/i18n/pt";
 
 const INDIGO: [number, number, number] = [79, 70, 229];
 const INDIGO_LIGHT: [number, number, number] = [238, 242, 255];
@@ -31,8 +34,16 @@ function formatPdf(
   );
 }
 
-export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
-  const s = strings ?? pt.pdf;
+function getPdfStrings(lang: Language, messages?: Messages): PdfStrings {
+  return messages?.pdf ?? (lang === "en" ? en.pdf : pt.pdf);
+}
+
+export function generateTripPdf(
+  trip: Trip,
+  lang: Language = "pt",
+  messages?: Messages,
+): void {
+  const s = getPdfStrings(lang, messages);
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
   let y = 0;
   let page = 1;
@@ -113,12 +124,12 @@ export function generateTripPdf(trip: Trip, strings?: PdfStrings): void {
     const titleLines = doc.splitTextToSize(activity.title, textMax) as string[];
 
     const extraLines: string[] = [];
-    if (activity.duration) extraLines.push(`Duracao: ${activity.duration}`);
-    if (activity.cost) extraLines.push(`Custo: ${activity.cost}`);
-    if (activity.openingHours) extraLines.push(`Horario: ${activity.openingHours}`);
-    if (activity.tip) extraLines.push(`Dica: ${activity.tip}`);
+    if (activity.duration) extraLines.push(`${s.duration}: ${activity.duration}`);
+    if (activity.cost) extraLines.push(`${s.cost}: ${activity.cost}`);
+    if (activity.openingHours) extraLines.push(`${s.openingHours}: ${activity.openingHours}`);
+    if (activity.tip) extraLines.push(`${s.tip}: ${activity.tip}`);
     if (activity.lat != null && activity.lng != null) {
-      extraLines.push(`Local: ${activity.lat}, ${activity.lng}`);
+      extraLines.push(`${s.location}: ${activity.lat}, ${activity.lng}`);
     }
 
     const extraHeight = extraLines.length > 0

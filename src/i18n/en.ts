@@ -174,6 +174,11 @@ export const en: Messages = {
     rating: "Rating {value}",
     fileTrip: "itinerary",
     fileChecklist: "checklist",
+    duration: "Duration",
+    cost: "Cost",
+    openingHours: "Hours",
+    tip: "Tip",
+    location: "Location",
   },
   errors: {
     generateRoteiro:
