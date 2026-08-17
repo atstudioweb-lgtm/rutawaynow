@@ -186,6 +186,47 @@ export const pt = {
     unexpectedRoteiro: "Erro inesperado ao gerar o roteiro.",
     unexpectedChecklist: "Erro inesperado ao gerar o checklist.",
   },
+  pricing: {
+    title: "Escolha seu plano",
+    subtitle: "Comece a planejar suas viagens hoje",
+    popular: "Mais popular",
+    oneTime: "Pagamento único",
+    currency: "Moeda",
+    single: {
+      name: "Avulso",
+      description: "Ideal para uma viagem única",
+      features: [
+        "1 roteiro completo",
+        "Checklist de viagem",
+        "Tradução automática",
+        "PDF para download",
+        "Acesso vitalício a este roteiro",
+      ],
+    },
+    fortnightly: {
+      name: "Quinzenal",
+      description: "Para quem viaja frequentemente",
+      features: [
+        "3 roteiros por mês",
+        "Checklist de viagem",
+        "Tradução automática",
+        "PDF para download",
+        "Suporte prioritário",
+      ],
+    },
+    monthly: {
+      name: "Mensal",
+      description: "Para viajantes assíduos e famílias",
+      features: [
+        "10 roteiros por mês",
+        "Checklist de viagem",
+        "Tradução automática",
+        "PDF para download",
+        "Suporte prioritário",
+        "Acesso antecipado a novidades",
+      ],
+    },
+  },
 };
 
 export type Messages = typeof pt;

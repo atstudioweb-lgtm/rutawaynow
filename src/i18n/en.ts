@@ -188,4 +188,45 @@ export const en: Messages = {
     unexpectedRoteiro: "Unexpected error while generating the itinerary.",
     unexpectedChecklist: "Unexpected error while generating the checklist.",
   },
+  pricing: {
+    title: "Choose your plan",
+    subtitle: "Start planning your trips today",
+    popular: "Most popular",
+    oneTime: "One-time payment",
+    currency: "Currency",
+    single: {
+      name: "Single",
+      description: "Perfect for a one-time trip",
+      features: [
+        "1 complete itinerary",
+        "Travel checklist",
+        "Automatic translation",
+        "PDF download",
+        "Lifetime access to this itinerary",
+      ],
+    },
+    fortnightly: {
+      name: "Fortnightly",
+      description: "For frequent travelers",
+      features: [
+        "3 itineraries per month",
+        "Travel checklist",
+        "Automatic translation",
+        "PDF download",
+        "Priority support",
+      ],
+    },
+    monthly: {
+      name: "Monthly",
+      description: "For avid travelers and families",
+      features: [
+        "10 itineraries per month",
+        "Travel checklist",
+        "Automatic translation",
+        "PDF download",
+        "Priority support",
+        "Early access to new features",
+      ],
+    },
+  },
 };
