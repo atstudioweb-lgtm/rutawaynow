@@ -7,27 +7,6 @@ import { Button } from '@/components/ui/button';
 
 type Currency = 'BRL' | 'USD' | 'EUR';
 
-function detectCurrency(): Currency {
-  if (typeof window === 'undefined') return 'BRL';
-  
-  // Try to get from localStorage first
-  const saved = localStorage.getItem('rutawaynow-currency');
-  if (saved && ['BRL', 'USD', 'EUR'].includes(saved)) {
-    return saved as Currency;
-  }
-  
-  // Detect from browser locale
-  const locale = navigator.language || navigator.languages[0] || 'pt-BR';
-  const region = locale.split('-')[1] || locale.split('_')[1] || '';
-  
-  if (region === 'BR') return 'BRL';
-  if (['US', 'CA', 'MX'].includes(region)) return 'USD';
-  if (['DE', 'FR', 'ES', 'IT', 'PT', 'NL', 'BE', 'AT', 'IE', 'FI'].includes(region)) return 'EUR';
-  
-  // Default to USD for other regions
-  return 'USD';
-}
-
 function formatPriceWithCurrency(amount: number, currency: 'BRL' | 'USD' | 'EUR'): string {
   return new Intl.NumberFormat(
     currency === 'BRL' ? 'pt-BR' : currency === 'USD' ? 'en-US' : 'de-DE',
@@ -48,9 +27,15 @@ export function PricingPlans() {
   const plans = getAllPlans();
 
   useEffect(() => {
-    const detected = detectCurrency();
-    setUserCurrency(detected);
-  }, []);
+    const saved = localStorage.getItem('rutawaynow-currency');
+    if (saved && ['BRL', 'USD', 'EUR'].includes(saved)) {
+      setUserCurrency(saved as Currency);
+    } else {
+      // Sync with app language
+      if (lang === 'en') setUserCurrency('USD');
+      else setUserCurrency('BRL');
+    }
+  }, [lang]);
 
   const currency = userCurrency;
 
@@ -254,7 +239,7 @@ function PlanCard({
         size="lg"
         variant={isPopular ? 'default' : 'outline'}
         disabled={loading}
-        onClick={() => onSelect('stripe')}
+        onClick={() => onSelect(selectedProvider)}
       >
         {loading ? (
           <>
@@ -265,7 +250,7 @@ function PlanCard({
             {t('common.loading') || 'Carregando...'}
           </>
         ) : (
-          `Selecionar ${currency === 'BRL' ? 'Mercado Pago' : 'Stripe'}`
+          `Selecionar ${selectedProvider === 'mercadopago' ? 'Mercado Pago' : 'Stripe'}`
         )}
       </Button>
     </div>
