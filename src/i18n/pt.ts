@@ -195,6 +195,8 @@ export const pt = {
     month: "mês",
     fortnight: "quinzena",
     selectProvider: "Selecionar {provider}",
+    payWith: "Pagar com {provider}",
+    back: "Voltar",
     single: {
       name: "Avulso",
       description: "Ideal para uma viagem única",

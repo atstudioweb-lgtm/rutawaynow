@@ -81,6 +81,19 @@ export function PricingPlans() {
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        {/* Back Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {t('pricing.back') || 'Voltar'}
+          </button>
+        </div>
+
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
             {t('pricing.title') || 'Escolha seu plano'}
@@ -250,7 +263,7 @@ function PlanCard({
             {t('common.loading') || 'Carregando...'}
           </>
         ) : (
-          `${t('pricing.selectProvider', { provider: selectedProvider === 'mercadopago' ? 'Mercado Pago' : 'Stripe' })}`
+          `${t('pricing.payWith', { provider: selectedProvider === 'mercadopago' ? 'Mercado Pago' : 'Stripe' })}`
         )}
       </Button>
     </div>

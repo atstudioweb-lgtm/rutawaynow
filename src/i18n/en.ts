@@ -197,6 +197,8 @@ export const en: Messages = {
     month: "month",
     fortnight: "fortnight",
     selectProvider: "Select {provider}",
+    payWith: "Pay with {provider}",
+    back: "Back",
     single: {
       name: "Single",
       description: "Perfect for a one-time trip",
