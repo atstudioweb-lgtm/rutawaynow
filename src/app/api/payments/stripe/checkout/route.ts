@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
+import { getTranslation } from '@/lib/i18n-server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,17 +23,24 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const result = await createStripeCheckoutSession({
-      plan,
-      currency: currency as 'BRL' | 'USD' | 'EUR',
-      userId: user.id,
-      userEmail: user.email,
-      userName: user.name,
-      successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: cancelUrl || `${baseUrl}/pricing`,
-      provider: 'stripe',
-      t: (key) => key, // Fallback for API routes without i18n context
-    });
+    const { t } = getTranslation('pt');
+
+      const result = await createStripeCheckoutSession({
+        plan,
+        currency: currency as 'BRL' | 'USD' | 'EUR',
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: cancelUrl || `${baseUrl}/pricing`,
+        provider: 'stripe',
+        lang: 'pt',
+        // Pass translated strings
+        planName: t(plan.nameKey),
+        planDescription: t(plan.descriptionKey),
+        itineraryText: t(`pricing.itinerary${plan.itineraries > 1 ? 's' : ''}`),
+        intervalText: plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '',
+      });
 
     return NextResponse.json({ url: result.url, sessionId: result.sessionId });
   } catch (error) {

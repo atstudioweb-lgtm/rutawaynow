@@ -1,5 +1,6 @@
 import { preference, preApprovalPlan, preApproval, payment } from './client';
 import { Plan, getPriceForCurrency } from '@/config/pricing';
+import { getTranslation } from '@/lib/i18n-server';
 
 export interface CreateMercadoPagoParams {
   plan: Plan;
@@ -12,14 +13,15 @@ export interface CreateMercadoPagoParams {
   successUrl: string;
   cancelUrl: string;
   provider: 'stripe' | 'mercadopago';
-  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 export async function createMercadoPagoPreference(params: CreateMercadoPagoParams) {
-  const { plan, userId, userEmail, userName, userPhone, userDocument, successUrl, cancelUrl, t } = params;
+  const { plan, userId, userEmail, userName, userPhone, userDocument, successUrl, cancelUrl } = params;
 
   const amount = getPriceForCurrency(params.plan, 'BRL');
   const isSubscription = params.plan.interval !== undefined;
+
+  const { t } = getTranslation('pt');
 
   const preferenceData = {
     items: [{
@@ -59,8 +61,9 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
 
   if (isSubscription) {
     // Create preapproval plan for recurring payments
+    const { t } = getTranslation('pt');
     const planData = {
-      reason: `RutawayNow - ${params.plan.nameKey}`,
+      reason: `RutawayNow - ${t(params.plan.nameKey)}`,
       auto_recurring: {
         frequency: 1,
         frequency_type: params.plan.interval === 'month' ? 'months' : 'weeks',

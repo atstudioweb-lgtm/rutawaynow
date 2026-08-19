@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
+import { getTranslation } from '@/lib/i18n-server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +28,15 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+    // Create translation function for the requested language
+    const { t } = getTranslation(lang as 'pt' | 'en');
+
+    // Translate plan name and description for Stripe checkout
+    const planName = t(plan.nameKey);
+    const planDescription = t(plan.descriptionKey);
+    const itineraryText = t(`pricing.itinerary${plan.itineraries > 1 ? 's' : ''}`);
+    const intervalText = plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '';
+
     if (provider === 'stripe') {
       const result = await createStripeCheckoutSession({
         plan,
@@ -37,25 +47,28 @@ export async function POST(req: NextRequest) {
         successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'stripe',
-        t: (key) => key, // Fallback for API routes without i18n context
-        lang, // Pass language for Stripe locale
+        lang,
+        // Pass translated strings for Stripe
+        planName: t(plan.nameKey),
+        planDescription: t(plan.descriptionKey),
+        itineraryText: t(`pricing.itinerary${plan.itineraries > 1 ? 's' : ''}`),
+        intervalText: plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '',
       });
 
       return NextResponse.json({ url: result.url, sessionId: result.sessionId });
     } else if (provider === 'mercadopago') {
-      const result = await createMercadoPagoPreference({
-        plan,
-        currency: 'BRL',
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        userPhone: user.phone,
-        userDocument: user.document,
-        successUrl: `${baseUrl}/checkout/success`,
-        cancelUrl: cancelUrl || `${baseUrl}/pricing`,
-        provider: 'mercadopago',
-        t: (key) => key, // Fallback for API routes without i18n context
-      });
+const result = await createMercadoPagoPreference({
+      plan,
+      currency: 'BRL',
+      userId: user.id,
+      userEmail: user.email,
+      userName: user.name,
+      userPhone: user.phone,
+      userDocument: user.document,
+      successUrl: `${baseUrl}/checkout/success`,
+      cancelUrl: cancelUrl || `${baseUrl}/pricing`,
+      provider: 'mercadopago',
+    });
 
       return NextResponse.json({ url: result.init_point, preferenceId: result.id });
     } else {

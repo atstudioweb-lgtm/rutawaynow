@@ -199,6 +199,8 @@ export const en: Messages = {
     selectProvider: "Select {provider}",
     payWith: "Pay with {provider}",
     back: "Back",
+    itinerary: "itinerary",
+    itineraries: "itineraries",
     single: {
       name: "Single",
       description: "Perfect for a one-time trip",

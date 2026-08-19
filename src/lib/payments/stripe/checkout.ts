@@ -10,26 +10,30 @@ export interface CreateCheckoutParams {
   successUrl: string;
   cancelUrl: string;
   provider: 'stripe' | 'mercadopago';
-  t: (key: string, params?: Record<string, string | number>) => string;
   lang?: string;
+  // Pre-translated strings for Stripe checkout
+  planName: string;
+  planDescription: string;
+  itineraryText: string;
+  intervalText: string;
 }
 
 export async function createStripeCheckoutSession(params: CreateCheckoutParams) {
-  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, t, lang } = params;
+  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, lang, planName, planDescription, itineraryText, intervalText } = params;
 
-  const amount = getPriceForCurrency(params.plan, currency);
+  const amount = getPriceForCurrency(plan, currency);
 
-  const isSubscription = params.plan.interval !== undefined;
+  const isSubscription = plan.interval !== undefined;
 
   const lineItems = [{
     price_data: {
       currency: currency.toLowerCase(),
       unit_amount: Math.round(amount * 100),
       product_data: {
-        name: `RutawayNow - ${t(params.plan.nameKey)}`,
-        description: `${params.plan.itineraries} ${t('pricing.itinerary' + (params.plan.itineraries > 1 ? 's' : ''))}${params.plan.interval ? ` / ${t(params.plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : ''}`,
+        name: `RutawayNow - ${planName}`,
+        description: `${plan.itineraries} ${itineraryText}${intervalText}`,
         metadata: {
-          plan_id: params.plan.id,
+          plan_id: plan.id,
         },
       },
       ...(isSubscription && {

@@ -197,6 +197,8 @@ export const pt = {
     selectProvider: "Selecionar {provider}",
     payWith: "Pagar com {provider}",
     back: "Voltar",
+    itinerary: "roteiro",
+    itineraries: "roteiros",
     single: {
       name: "Avulso",
       description: "Ideal para uma viagem única",

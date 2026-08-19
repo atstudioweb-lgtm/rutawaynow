@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
+import { getTranslation } from '@/lib/i18n-server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,9 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-const result = await createMercadoPagoPreference({
+const { t } = getTranslation('pt');
+
+    const result = await createMercadoPagoPreference({
       plan,
       currency: 'BRL',
       userId: user.id,
@@ -34,7 +37,6 @@ const result = await createMercadoPagoPreference({
       successUrl: `${baseUrl}/checkout/success`,
       cancelUrl: cancelUrl || `${baseUrl}/pricing`,
       provider: 'mercadopago',
-      t: (key) => key, // Fallback for API routes without i18n context
     });
 
     return NextResponse.json({ url: result.init_point, preferenceId: result.id });
