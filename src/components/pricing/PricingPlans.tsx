@@ -120,7 +120,7 @@ export function PricingPlans() {
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            💳 Stripe (Cartão Internacional)
+            💳 {t('pricing.stripe.name')}
           </button>
           <button
             onClick={() => setSelectedProvider('mercadopago')}
@@ -130,7 +130,7 @@ export function PricingPlans() {
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            🇧🇷 Mercado Pago (PIX + Cartão BR)
+            🇧🇷 {t('pricing.mercadopago.name')}
           </button>
         </div>
 
@@ -151,15 +151,15 @@ export function PricingPlans() {
         {/* Payment Methods Info */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 text-center">
           <div className="p-4 rounded-xl bg-indigo-50">
-            <h3 className="font-semibold text-indigo-900">💳 Stripe</h3>
+            <h3 className="font-semibold text-indigo-900">💳 {t('pricing.stripe.name')}</h3>
             <p className="text-sm text-indigo-700 mt-1">
-              Cartões internacionais, Google Pay, Apple Pay, Link
+              {t('pricing.stripe.description')}
             </p>
           </div>
           <div className="p-4 rounded-xl bg-indigo-50">
-            <h3 className="font-semibold text-indigo-900">🇧🇷 Mercado Pago</h3>
+            <h3 className="font-semibold text-indigo-900">🇧🇷 {t('pricing.mercadopago.name')}</h3>
             <p className="text-sm text-indigo-700 mt-1">
-              PIX, Cartões brasileiros, Boleto, Saldo Mercado Pago
+              {t('pricing.mercadopago.description')}
             </p>
           </div>
         </div>
