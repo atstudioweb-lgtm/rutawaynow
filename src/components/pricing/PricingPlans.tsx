@@ -60,6 +60,7 @@ export function PricingPlans() {
           provider,
           successUrl,
           cancelUrl,
+          lang,  // Pass current language to API
         }),
       });
 

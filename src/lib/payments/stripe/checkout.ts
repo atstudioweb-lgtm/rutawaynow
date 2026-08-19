@@ -11,10 +11,11 @@ export interface CreateCheckoutParams {
   cancelUrl: string;
   provider: 'stripe' | 'mercadopago';
   t: (key: string, params?: Record<string, string | number>) => string;
+  lang?: string;
 }
 
 export async function createStripeCheckoutSession(params: CreateCheckoutParams) {
-  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, t } = params;
+  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, t, lang } = params;
 
   const amount = getPriceForCurrency(params.plan, currency);
 
@@ -66,6 +67,7 @@ export async function createStripeCheckoutSession(params: CreateCheckoutParams) 
     allow_promotion_codes: true,
     billing_address_collection: 'required',
     phone_number_collection: { enabled: true },
+    locale: lang === 'en' ? 'en' : lang === 'pt' ? 'pt-BR' : 'auto',
   });
 
   return {

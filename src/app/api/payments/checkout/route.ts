@@ -6,7 +6,7 @@ import { Plan, getAllPlans } from '@/config/pricing';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, currency, provider, successUrl, cancelUrl } = body;
+    const { planId, currency, provider, successUrl, cancelUrl, lang } = body;
 
     // Validate plan
     const plans = getAllPlans();
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'stripe',
         t: (key) => key, // Fallback for API routes without i18n context
+        lang, // Pass language for Stripe locale
       });
 
       return NextResponse.json({ url: result.url, sessionId: result.sessionId });
