@@ -194,6 +194,9 @@ export const en: Messages = {
     popular: "Most popular",
     oneTime: "One-time payment",
     currency: "Currency",
+    month: "month",
+    fortnight: "fortnight",
+    selectProvider: "Select {provider}",
     single: {
       name: "Single",
       description: "Perfect for a one-time trip",
@@ -209,7 +212,7 @@ export const en: Messages = {
       name: "Fortnightly",
       description: "For frequent travelers",
       features: [
-        "3 itineraries per month",
+        "3 itineraries per fortnight",
         "Travel checklist",
         "Automatic translation",
         "PDF download",

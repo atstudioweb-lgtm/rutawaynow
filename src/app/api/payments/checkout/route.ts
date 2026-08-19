@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'stripe',
+        t: (key) => key, // Fallback for API routes without i18n context
       });
 
       return NextResponse.json({ url: result.url, sessionId: result.sessionId });
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
         successUrl: `${baseUrl}/checkout/success`,
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'mercadopago',
+        t: (key) => key, // Fallback for API routes without i18n context
       });
 
       return NextResponse.json({ url: result.init_point, preferenceId: result.id });

@@ -192,6 +192,9 @@ export const pt = {
     popular: "Mais popular",
     oneTime: "Pagamento único",
     currency: "Moeda",
+    month: "mês",
+    fortnight: "quinzena",
+    selectProvider: "Selecionar {provider}",
     single: {
       name: "Avulso",
       description: "Ideal para uma viagem única",

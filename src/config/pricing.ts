@@ -2,8 +2,8 @@ export type PlanId = 'single' | 'fortnightly' | 'monthly';
 
 export interface Plan {
   id: PlanId;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   itineraries: number;
   interval?: 'month' | 'fortnight';
   prices: {
@@ -11,33 +11,33 @@ export interface Plan {
     USD: number;
     EUR: number;
   };
-  features: string[];
+  featuresKeys: string[];
   popular?: boolean;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
   single: {
     id: 'single',
-    name: 'Avulso',
-    description: 'Ideal para uma viagem única',
+    nameKey: 'pricing.single.name',
+    descriptionKey: 'pricing.single.description',
     itineraries: 1,
     prices: {
       BRL: 9.90,
       USD: 1.99,
       EUR: 1.89,
     },
-    features: [
-      '1 roteiro completo',
-      'Checklist de viagem',
-      'Tradução automática',
-      'PDF para download',
-      'Acesso vitalício a este roteiro',
+    featuresKeys: [
+      'pricing.single.feature1',
+      'pricing.single.feature2',
+      'pricing.single.feature3',
+      'pricing.single.feature4',
+      'pricing.single.feature5',
     ],
   },
   fortnightly: {
     id: 'fortnightly',
-    name: 'Quinzenal',
-    description: 'Para quem viaja frequentemente',
+    nameKey: 'pricing.fortnightly.name',
+    descriptionKey: 'pricing.fortnightly.description',
     itineraries: 3,
     interval: 'fortnight',
     prices: {
@@ -45,19 +45,19 @@ export const PLANS: Record<PlanId, Plan> = {
       USD: 3.99,
       EUR: 3.79,
     },
-    features: [
-      '3 roteiros por mês',
-      'Checklist de viagem',
-      'Tradução automática',
-      'PDF para download',
-      'Suporte prioritário',
+    featuresKeys: [
+      'pricing.fortnightly.feature1',
+      'pricing.fortnightly.feature2',
+      'pricing.fortnightly.feature3',
+      'pricing.fortnightly.feature4',
+      'pricing.fortnightly.feature5',
     ],
     popular: true,
   },
   monthly: {
     id: 'monthly',
-    name: 'Mensal',
-    description: 'Para viajantes assíduos e famílias',
+    nameKey: 'pricing.monthly.name',
+    descriptionKey: 'pricing.monthly.description',
     itineraries: 10,
     interval: 'month',
     prices: {
@@ -65,18 +65,18 @@ export const PLANS: Record<PlanId, Plan> = {
       USD: 6.99,
       EUR: 6.49,
     },
-    features: [
-      '10 roteiros por mês',
-      'Checklist de viagem',
-      'Tradução automática',
-      'PDF para download',
-      'Suporte prioritário',
-      'Acesso antecipado a novidades',
+    featuresKeys: [
+      'pricing.monthly.feature1',
+      'pricing.monthly.feature2',
+      'pricing.monthly.feature3',
+      'pricing.monthly.feature4',
+      'pricing.monthly.feature5',
+      'pricing.monthly.feature6',
     ],
   },
 };
 
-export function getPlan(id: PlanId): Plan {
+export function getPlan(id: PlanId) {
   return PLANS[id];
 }
 

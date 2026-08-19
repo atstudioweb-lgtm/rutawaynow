@@ -10,10 +10,11 @@ export interface CreateCheckoutParams {
   successUrl: string;
   cancelUrl: string;
   provider: 'stripe' | 'mercadopago';
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 export async function createStripeCheckoutSession(params: CreateCheckoutParams) {
-  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl } = params;
+  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, t } = params;
 
   const amount = getPriceForCurrency(params.plan, currency);
 
@@ -24,8 +25,8 @@ export async function createStripeCheckoutSession(params: CreateCheckoutParams) 
       currency: currency.toLowerCase(),
       unit_amount: Math.round(amount * 100),
       product_data: {
-        name: `RutawayNow - ${params.plan.name}`,
-        description: `${params.plan.itineraries} roteiro${params.plan.itineraries > 1 ? 's' : ''}${params.plan.interval ? ` / ${params.plan.interval === 'month' ? 'mês' : 'quinzena'}` : ''}`,
+        name: `RutawayNow - ${t(params.plan.nameKey)}`,
+        description: `${params.plan.itineraries} ${t('pricing.itinerary' + (params.plan.itineraries > 1 ? 's' : ''))}${params.plan.interval ? ` / ${t(params.plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : ''}`,
         metadata: {
           plan_id: params.plan.id,
         },

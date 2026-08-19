@@ -12,10 +12,11 @@ export interface CreateMercadoPagoParams {
   successUrl: string;
   cancelUrl: string;
   provider: 'stripe' | 'mercadopago';
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 export async function createMercadoPagoPreference(params: CreateMercadoPagoParams) {
-  const { plan, userId, userEmail, userName, userPhone, userDocument, successUrl, cancelUrl } = params;
+  const { plan, userId, userEmail, userName, userPhone, userDocument, successUrl, cancelUrl, t } = params;
 
   const amount = getPriceForCurrency(params.plan, 'BRL');
   const isSubscription = params.plan.interval !== undefined;
@@ -23,8 +24,8 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
   const preferenceData = {
     items: [{
       id: params.plan.id,
-      title: `RutawayNow - ${params.plan.name}`,
-      description: `${params.plan.itineraries} roteiro${params.plan.itineraries > 1 ? 's' : ''}${params.plan.interval ? ` / ${params.plan.interval === 'month' ? 'mês' : 'quinzena'}` : ''}`,
+      title: `RutawayNow - ${t(params.plan.nameKey)}`,
+      description: `${params.plan.itineraries} ${t('pricing.itinerary' + (params.plan.itineraries > 1 ? 's' : ''))}${params.plan.interval ? ` / ${t(params.plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : ''}`,
       quantity: 1,
       currency_id: 'BRL',
       unit_price: amount,
@@ -59,7 +60,7 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
   if (isSubscription) {
     // Create preapproval plan for recurring payments
     const planData = {
-      reason: `RutawayNow - ${params.plan.name}`,
+      reason: `RutawayNow - ${params.plan.nameKey}`,
       auto_recurring: {
         frequency: 1,
         frequency_type: params.plan.interval === 'month' ? 'months' : 'weeks',

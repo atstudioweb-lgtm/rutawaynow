@@ -203,8 +203,8 @@ function PlanCard({
       )}
 
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
-        <p className="mt-1 text-sm text-slate-600">{plan.description}</p>
+        <h3 className="text-xl font-bold text-slate-900">{t(plan.nameKey)}</h3>
+        <p className="mt-1 text-sm text-slate-600">{t(plan.descriptionKey)}</p>
       </div>
 
       <div className="mb-6">
@@ -214,22 +214,22 @@ function PlanCard({
           </span>
           {plan.interval && (
             <span className="text-sm text-slate-500">
-              /{plan.interval === 'month' ? (currency === 'BRL' ? 'mês' : 'month') : (currency === 'BRL' ? 'quinzena' : 'fortnight')}
+              /{t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}
             </span>
           )}
         </div>
         {!plan.interval && (
-          <p className="text-sm text-slate-500 mt-1">{t('pricing.oneTime') || 'Pagamento único'}</p>
+          <p className="text-sm text-slate-500 mt-1">{t('pricing.oneTime')}</p>
         )}
       </div>
 
       <ul className="mb-6 space-y-3">
-        {plan.features.map((feature, index) => (
+        {plan.featuresKeys.map((featureKey, index) => (
           <li key={index} className="flex items-start gap-2 text-sm text-slate-600">
             <svg className="mt-0.5 h-5 w-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            {feature}
+            {t(featureKey)}
           </li>
         ))}
       </ul>
@@ -250,7 +250,7 @@ function PlanCard({
             {t('common.loading') || 'Carregando...'}
           </>
         ) : (
-          `Selecionar ${selectedProvider === 'mercadopago' ? 'Mercado Pago' : 'Stripe'}`
+          `${t('pricing.selectProvider', { provider: selectedProvider === 'mercadopago' ? 'Mercado Pago' : 'Stripe' })}`
         )}
       </Button>
     </div>

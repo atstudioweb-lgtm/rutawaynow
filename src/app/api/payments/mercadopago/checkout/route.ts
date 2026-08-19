@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const result = await createMercadoPagoPreference({
+const result = await createMercadoPagoPreference({
       plan,
       currency: 'BRL',
       userId: user.id,
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       successUrl: `${baseUrl}/checkout/success`,
       cancelUrl: cancelUrl || `${baseUrl}/pricing`,
       provider: 'mercadopago',
+      t: (key) => key, // Fallback for API routes without i18n context
     });
 
     return NextResponse.json({ url: result.init_point, preferenceId: result.id });
