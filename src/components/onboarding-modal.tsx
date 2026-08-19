@@ -11,6 +11,7 @@ import type {
   Roteiro,
   TripResult,
 } from "@/types/itinerary";
+import { getPlanStatus, incrementUsage } from "@/lib/plan-utils";
 
 const TOTAL_STEPS = 4;
 
@@ -200,6 +201,13 @@ export function OnboardingModal({
   const handleGenerate = async () => {
     if (!canGenerate || generating) return;
 
+    // Check plan status before generating
+    const planStatus = getPlanStatus();
+    if (!planStatus.canGenerate) {
+      setError(planStatus.message || t("errors.generateRoteiro"));
+      return;
+    }
+
     setError(null);
     setGenerating(true);
 
@@ -218,6 +226,12 @@ export function OnboardingModal({
 
       setItinerary(data);
       setDone(true);
+      
+      // Increment usage after successful generation
+      const planStatus = getPlanStatus();
+      if (planStatus.hasActivePlan && planStatus.planType) {
+        incrementUsage(planStatus.planType);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : t("errors.unexpectedRoteiro"),
