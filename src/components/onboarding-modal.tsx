@@ -146,7 +146,8 @@ export function OnboardingModal({
         : step === 3
           ? budget !== null
           : true;
-  const canGenerate = styles.length > 0;
+  const planStatus = getPlanStatus();
+  const canGenerate = styles.length > 0 && planStatus.canGenerate;
   const totalTravelers = adults + teens + children;
 
   const daysLabel = days === 1 ? t("onboarding.dayOne") : t("onboarding.dayOther");
