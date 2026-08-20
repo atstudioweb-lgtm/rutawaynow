@@ -23,7 +23,6 @@ function validatePlan(plan: string | null, planExpiry: string | null): { valid: 
     return { valid: false, message: 'Nenhum plano ativo. Adquira um plano para gerar roteiros.', remaining: 0 };
   }
 
-  const expiryDate = new Date(planExpiry);
   const now = new Date();
 
   if (new Date(planExpiry) < now) {
@@ -31,24 +30,13 @@ function validatePlan(plan: string | null, planExpiry: string | null): { valid: 
   }
 
   const planType = plan as 'single' | 'fortnightly' | 'monthly';
-  const maxItineraries = PLAN_LIMITS[planType] || 0;
+  const maxItineraries = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || 0;
 
   if (plan === 'single') {
-    const used = typeof window !== 'undefined' ? localStorage.getItem('rutawaynow-single-used') : null;
-    const usedCount = used ? parseInt(used, 10) : 0;
-    const remaining = Math.max(0, 1 - usedCount);
-    return { valid: remaining > 0, message: remaining > 0 ? undefined : 'Você já utilizou seu roteiro do plano Avulso. Adquira outro plano para continuar.', remaining };
+    return { valid: true, message: undefined, remaining: 1 };
   }
 
-  const periodKey = plan === 'monthly' 
-    ? new Date().toISOString().slice(0, 7)
-    : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
-  const usageKey = `rutawaynow-usage-${plan}-${periodKey}`;
-  const used = typeof window !== 'undefined' ? localStorage.getItem(`rutawaynow-usage-${plan}-${periodKey}`) : null;
-  const usedCount = used ? parseInt(used, 10) : 0;
-  const remaining = Math.max(0, PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] - usedCount);
-
-  return { valid: remaining > 0, message: remaining > 0 ? undefined : `Você atingiu o limite de ${PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]} roteiros no seu plano. Aguarde o próximo período ou adquira outro plano.`, remaining };
+  return { valid: true, message: undefined, remaining: PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || 0 };
 }
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
@@ -61,7 +49,7 @@ REGRAS OBRIGATÓRIAS:
 2. O JSON deve conter exatamente um dia para cada dia solicitado de viagem, dentro do array "dias", na ordem cronológica.
 3. Cada dia deve ter um array "atracoes" com atividades/atrações preenchidas para todos os horários do dia.
 4. Para cada atração, use os campos exatos: "horario" (formato HH:MM, ex.: "09:00"), "nome_da_atracao", "descricao_curta" (uma frase curta) e "categoria".
-5. O campo "categoria" deve ser SEMPRE uma das seguintes, sem tradução: "Aventura", "Gastronomia", "Cultura", "Natureza", "Passeio" ou "Relaxamento".
+5. O campo "categoria" deve SEMPRE ser uma das seguintes, sem tradução: "Aventura", "Gastronomia", "Cultura", "Natureza", "Passeio" ou "Relaxamento".
 6. Distribua as atrações ao longo do dia (manhã, almoço, tarde e noite), variando os horários.
 7. Priorize os estilos de viagem informados pelo usuário na escolha das atrações, misturando-os de forma equilibrada.
 8. Escreva o "titulo" de cada dia e a "descricao_curta" de cada atração em português do Brasil.
@@ -347,7 +335,7 @@ export async function POST(request: Request) {
     }
 
     const data = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
+      candidates?: { message?: { content?: string } }[];
       error?: { message?: string };
     };
 
@@ -359,7 +347,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = data.choices?.[0]?.message?.content;
+    const content = data.candidates?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidItinerary },
@@ -369,7 +357,7 @@ export async function POST(request: Request) {
 
     let itinerary: Roteiro;
     try {
-      itinerary = JSON.parse(extractJson(content)) as Roteiro;
+      itinerary = JSON.parse(content) as Roteiro;
     } catch {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(
