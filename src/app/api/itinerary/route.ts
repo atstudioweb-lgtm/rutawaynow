@@ -12,6 +12,44 @@ const FREEAI_API_URL = "https://api.free.ai/v1/chat/completions";
 const DEFAULT_MODEL = "qwen7b";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
+const PLAN_LIMITS = {
+  single: 1,
+  fortnightly: 3,
+  monthly: 10,
+} as const;
+
+function validatePlan(plan: string | null, planExpiry: string | null): { valid: boolean; message?: string; remaining: number } {
+  if (!plan || !planExpiry) {
+    return { valid: false, message: 'Nenhum plano ativo. Adquira um plano para gerar roteiros.', remaining: 0 };
+  }
+
+  const expiryDate = new Date(planExpiry);
+  const now = new Date();
+
+  if (new Date(planExpiry) < now) {
+    return { valid: false, message: 'Seu plano expirou. Renove para continuar gerando roteiros.', remaining: 0 };
+  }
+
+  const planType = plan as 'single' | 'fortnightly' | 'monthly';
+  const maxItineraries = PLAN_LIMITS[planType] || 0;
+
+  if (plan === 'single') {
+    const used = typeof window !== 'undefined' ? localStorage.getItem('rutawaynow-single-used') : null;
+    const usedCount = used ? parseInt(used, 10) : 0;
+    const remaining = Math.max(0, 1 - usedCount);
+    return { valid: remaining > 0, message: remaining > 0 ? undefined : 'Você já utilizou seu roteiro do plano Avulso. Adquira outro plano para continuar.', remaining };
+  }
+
+  const periodKey = plan === 'monthly' 
+    ? new Date().toISOString().slice(0, 7)
+    : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
+  const usageKey = `rutawaynow-usage-${plan}-${periodKey}`;
+  const used = typeof window !== 'undefined' ? localStorage.getItem(`rutawaynow-usage-${plan}-${periodKey}`) : null;
+  const usedCount = used ? parseInt(used, 10) : 0;
+  const remaining = Math.max(0, PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] - usedCount);
+
+  return { valid: remaining > 0, message: remaining > 0 ? undefined : `Você atingiu o limite de ${PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]} roteiros no seu plano. Aguarde o próximo período ou adquira outro plano.`, remaining };
+}
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
   pt: `Você é um especialista em planejamento de viagens do aplicativo "RutawayNow".
@@ -241,6 +279,17 @@ export async function POST(request: Request) {
 
   if (styles.length === 0) {
     return NextResponse.json({ error: errors.stylesRequired }, { status: 400 });
+  }
+
+  // Validate user's plan
+  const plan = body?.plan as string | undefined;
+  const planExpiry = body?.planExpiry as string | undefined;
+  const planValidation = validatePlan(plan || null, planExpiry || null);
+  if (!planValidation.valid) {
+    return NextResponse.json(
+      { error: planValidation.message || 'Plano inválido ou sem créditos.' },
+      { status: 403 },
+    );
   }
 
   // Mangaai doesn't require API key

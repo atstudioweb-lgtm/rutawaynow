@@ -40,6 +40,8 @@ export type GerarRoteiroInput = {
   children: number;
   styles: string[];
   lang: ApiLang;
+  plan?: string;
+  planExpiry?: string;
 };
 
 export type GerarChecklistInput = {

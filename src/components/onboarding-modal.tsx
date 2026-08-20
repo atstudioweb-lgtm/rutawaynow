@@ -213,10 +213,18 @@ export function OnboardingModal({
     setGenerating(true);
 
     try {
+      const input = buildInput();
+      const plan = localStorage.getItem('rutawaynow-plan');
+      const planExpiry = localStorage.getItem('rutawaynow-plan-expiry');
+
       const response = await fetch("/api/itinerary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildInput()),
+        body: JSON.stringify({
+          ...input,
+          plan: localStorage.getItem('rutawaynow-plan'),
+          planExpiry: localStorage.getItem('rutawaynow-plan-expiry'),
+        }),
       });
 
       const data = (await response.json()) as Roteiro & { error?: string };
