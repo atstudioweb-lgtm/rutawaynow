@@ -26,6 +26,7 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
     } else {
       setOpen(false);
       setPlanError(planStatus.message || t("errors.noActivePlan"));
+      // Redirect to pricing after showing error
       setTimeout(() => router.push('/pricing'), 3000);
     }
   };
@@ -35,20 +36,12 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
     setPlanError(null);
   };
 
-  const planStatus = getPlanStatus();
-  const isDisabled = !planStatus.canGenerate;
-
   return (
     <>
       <button
         type="button"
         onClick={handleClick}
-        disabled={!planStatus.canGenerate}
-        className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition ${
-          planStatus.canGenerate
-            ? 'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700'
-            : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-        }`}
+        className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition hover:bg-indigo-500 active:bg-indigo-700"
       >
         <Icon name="sparkles" className="h-4 w-4" />
         <span className="hidden sm:inline">{t("onboarding.planTrip")}</span>
