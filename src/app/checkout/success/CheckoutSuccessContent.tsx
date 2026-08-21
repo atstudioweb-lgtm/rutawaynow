@@ -30,9 +30,28 @@ export function CheckoutSuccessContent() {
         expiry.setFullYear(expiry.getFullYear() + 10);
       }
 
+      // Clear any existing usage data for this plan
+      localStorage.removeItem('rutawaynow-single-used');
+      
+      // Set plan data
       localStorage.setItem('rutawaynow-plan', plan);
-      localStorage.setItem('rutawaynow-plan-provider', provider);
+      localStorage.setItem('rutawaynow-plan-provider', providerParam || 'stripe');
       localStorage.setItem('rutawaynow-plan-expiry', expiry.toISOString());
+      
+      // Clear any existing usage data for this plan
+      const periodKey = plan === 'monthly' 
+        ? new Date().toISOString().slice(0, 7)
+        : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
+      localStorage.removeItem('rutawaynow-single-used');
+      localStorage.removeItem(`rutawaynow-usage-${plan}-${periodKey}`);
+
+      // Initialize usage counter for single plan
+      if (plan === 'single') {
+        localStorage.setItem('rutawaynow-single-used', '0');
+      }
+      
+      // Initialize usage counter for subscription plans
+      localStorage.setItem(`rutawaynow-usage-${plan}-${periodKey}`, '0');
     }
 
     // Redirect to dashboard after a short delay
