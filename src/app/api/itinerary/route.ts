@@ -183,7 +183,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
     stylesRequired: "Escolha pelo menos um estilo de viagem.",
     apiKeyMissing: "MANGAI_API_KEY não está configurada no ambiente.",
     apiFailed: "Falha ao gerar o roteiro. Tente novamente em instantes.",
-    noValidItinerary: "A API não retornou um roteiro válido.",
+    noValidItinerary: "Erro ao retornar o roteiro, tente novamente mais tarde.",
     unexpected: "Erro inesperado ao gerar o roteiro.",
   },
   en: {
@@ -197,7 +197,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
     apiKeyMissing: "MANGAI_API_KEY is not configured in the environment.",
     apiFailed:
       "Failed to generate the itinerary. Please try again in a moment.",
-    noValidItinerary: "The API did not return a valid itinerary.",
+    noValidItinerary: "Error returning the itinerary, please try again later.",
     unexpected: "Unexpected error while generating the itinerary.",
   },
 };
