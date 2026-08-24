@@ -298,8 +298,7 @@ export async function POST(request: Request) {
     const response = await fetchWithRetry(FREEAI_API_URL, {
       method: "POST",
       headers: {
-        "Authorization": "Bearer ${sk-free-40a15a175c455ea7406c5e9cce4c9b71d1be670f5738d147}",
-        Authorization: `Bearer ${process.env.FREEAI_API_KEY}`,
+        "Authorization": "Bearer ${process.env.FREEAI_API_KEY}",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
