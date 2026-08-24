@@ -219,7 +219,7 @@ export function OnboardingModal({
 
       const response = await fetch("/api/itinerary", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Authorization": "Bearer sk-free-40a15a175c455ea7406c5e9cce4c9b71d1be670f5738d147","Content-Type": "application/json" },
         body: JSON.stringify({
           ...input,
           plan: localStorage.getItem('rutawaynow-plan'),
