@@ -12,7 +12,6 @@ const FREEAI_API_URL = "https://api.free.ai/v1/chat/completions";
 const DEFAULT_MODEL = "qwen7b";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
-const API_KEY = "sk-free-40a15a175c455ea7406c5e9cce4c9b71d1be670f5738d147";
 const PLAN_LIMITS = {
   single: 1,
   fortnightly: 3,
@@ -300,6 +299,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         "Authorization": "Bearer ${sk-free-40a15a175c455ea7406c5e9cce4c9b71d1be670f5738d147}",
+        Authorization: `Bearer ${process.env.FREEAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
