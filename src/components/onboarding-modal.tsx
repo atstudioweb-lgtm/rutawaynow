@@ -220,7 +220,7 @@ export function OnboardingModal({
       const response = await fetch("/api/itinerary", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${sk-free-40a15a175c455ea7406c5e9cce4c9b71d1be670f5738d147}`,
+          "Authorization": "Bearer ${process.env.FREEAI_API_KEY}",
           "Content-Type": "application/json"},
         body: JSON.stringify({
           ...input,
