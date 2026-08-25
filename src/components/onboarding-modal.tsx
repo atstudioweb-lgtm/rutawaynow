@@ -377,6 +377,7 @@ export function OnboardingModal({
                 </p>
               </div>
 
+            /*
               {itinerary && (
                 <div className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-1 sm:max-h-64">
                   {itinerary.dias.map((dia) => (
@@ -445,6 +446,7 @@ export function OnboardingModal({
                   ))}
                 </div>
               )}
+            */
 
               <div className="mt-5 flex gap-3">
                 <button
