@@ -363,7 +363,7 @@ export async function POST(request: Request) {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(
         { error: errors.noValidItinerary },
-        { status: 999 },
+        { status: 502 },
       );
     }
 
