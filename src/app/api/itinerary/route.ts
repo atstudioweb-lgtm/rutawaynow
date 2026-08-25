@@ -326,12 +326,12 @@ export async function POST(request: Request) {
       if (response.status === 429 || response.errorType === "rate_limit") {
         return NextResponse.json(
           { error: errors.rateLimitExceeded ?? errors.apiFailed },
-          { status: 429 },
+          { status: response.status },
         );
       }
       return NextResponse.json(
         { error: errors.apiFailed },
-        { status: 502 },
+        { status: response.status },
       );
     }
 
@@ -344,7 +344,7 @@ export async function POST(request: Request) {
       console.error(`[itinerary] Free.ai error: ${data.error.message}`);
       return NextResponse.json(
         { error: errors.apiFailed },
-        { status: 502 },
+        { status: response.status },
       );
     }
 
@@ -352,7 +352,7 @@ export async function POST(request: Request) {
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidItinerary },
-        { status: 502 },
+        { status: response.status },
       );
     }
 
@@ -363,7 +363,7 @@ export async function POST(request: Request) {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(
         { error: errors.noValidItinerary },
-        { status: 502 },
+        { status: 999 },
       );
     }
 
