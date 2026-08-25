@@ -487,7 +487,7 @@ export function OnboardingModal({
                       });
                     }
                     onClose();
-                    setTimeout(reset, 300);
+                    setTimeout(reset, 900);
                   }}
                   className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition hover:bg-indigo-500 active:bg-indigo-700"
                 >
