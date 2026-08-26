@@ -280,8 +280,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Mangaai doesn't require API key
-
   const userPrompt = USER_PROMPTS[lang]({
     destination,
     days,
@@ -320,15 +318,26 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      const errorStatus = 0;
       console.error(
         `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
-      if (response.status === 429 || response.errorType === "rate_limit") {
+      
+      if (response.status === 429) {
+        errorStatus = 429;
         return NextResponse.json(
-          { error: errors.rateLimitExceeded ?? errors.apiFailed },
-          { status: 429 },
+          { error: errors.apiFailed },
+          { status: errorStatus },
         );
       }
+      if (response.errorType === "rate_limit") {
+        errorStatus = 430;
+        return NextResponse.json(
+          { error: errors.rateLimitExceeded },
+          { status: errorStatus },
+        );
+      }
+      
       return NextResponse.json(
         { error: errors.apiFailed },
         { status: 502 },
