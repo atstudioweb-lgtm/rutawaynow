@@ -6,7 +6,7 @@ import { getTranslation } from '@/lib/i18n-server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, successUrl, cancelUrl } = body;
+    const { planId, successUrl, cancelUrl, provider } = body;
 
     const plans = getAllPlans();
     const plan = plans.find(p => p.id === planId);
@@ -34,7 +34,7 @@ const { t } = getTranslation('pt');
       userName: user.name,
       userPhone: user.phone,
       userDocument: user.document,
-      successUrl: `${baseUrl}/checkout/success`,
+      successUrl: `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}`,
       cancelUrl: cancelUrl || `${baseUrl}/pricing`,
       provider: 'mercadopago',
     });

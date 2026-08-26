@@ -48,7 +48,7 @@ export function PricingPlans() {
     setLoadingPlan(plan.id);
     try {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const successUrl = `${baseUrl}/checkout/success`;
+      const successUrl = `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${selectedProvider}`;
       const cancelUrl = `${baseUrl}/pricing`;
 
       const response = await fetch('/api/payments/checkout', {

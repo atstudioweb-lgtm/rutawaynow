@@ -30,28 +30,29 @@ export function CheckoutSuccessContent() {
         expiry.setFullYear(expiry.getFullYear() + 10);
       }
 
-      // Clear any existing usage data for this plan
-      localStorage.removeItem('rutawaynow-single-used');
-      
-      // Set plan data
+      // Set plan data first (before any usage operations)
       localStorage.setItem('rutawaynow-plan', plan);
       localStorage.setItem('rutawaynow-plan-provider', providerParam || 'stripe');
       localStorage.setItem('rutawaynow-plan-expiry', expiry.toISOString());
       
-      // Clear any existing usage data for this plan
+      // Only initialize usage counters if they don't already exist
+      // This preserves existing usage when user re-opens the app or clears cache partially
       const periodKey = plan === 'monthly' 
         ? new Date().toISOString().slice(0, 7)
         : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
-      localStorage.removeItem('rutawaynow-single-used');
-      localStorage.removeItem(`rutawaynow-usage-${plan}-${periodKey}`);
-
-      // Initialize usage counter for single plan
-      if (plan === 'single') {
+      
+      // Initialize single plan usage only if not already set
+      const existingSingleUsed = localStorage.getItem('rutawaynow-single-used');
+      if (!existingSingleUsed) {
         localStorage.setItem('rutawaynow-single-used', '0');
       }
       
-      // Initialize usage counter for subscription plans
-      localStorage.setItem(`rutawaynow-usage-${plan}-${periodKey}`, '0');
+      // Initialize subscription plan usage only if not already set
+      const existingUsageKey = `rutawaynow-usage-${plan}-${periodKey}`;
+      const existingUsage = localStorage.getItem(existingUsageKey);
+      if (!existingUsage) {
+        localStorage.setItem(existingUsageKey, '0');
+      }
     }
 
     // Redirect to dashboard after a short delay

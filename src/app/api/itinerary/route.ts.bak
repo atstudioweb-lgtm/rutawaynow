@@ -181,7 +181,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "As quantidades de adultos (mín. 1), adolescentes e crianças devem ser números inteiros entre 0 e 50.",
     budgetInvalid: "O orçamento deve ser 'baixo', 'medio' ou 'alto'.",
     stylesRequired: "Escolha pelo menos um estilo de viagem.",
-    apiKeyMissing: "FREEAI_API_KEY não está configurada no ambiente.",
+    apiKeyMissing: "MANGAI_API_KEY não está configurada no ambiente.",
     apiFailed: "Falha ao gerar o roteiro. Tente novamente em instantes.",
     noValidItinerary: "Erro ao retornar o roteiro, tente novamente mais tarde.",
     unexpected: "Erro inesperado ao gerar o roteiro.",
@@ -194,7 +194,7 @@ const ERRORS: Record<ApiLang, Record<string, string>> = {
       "Counts of adults (min. 1), teens and children must be integers between 0 and 50.",
     budgetInvalid: "Budget must be 'baixo', 'medio' or 'alto'.",
     stylesRequired: "Choose at least one travel style.",
-    apiKeyMissing: "FREE_API_KEY is not configured in the environment.",
+    apiKeyMissing: "MANGAI_API_KEY is not configured in the environment.",
     apiFailed:
       "Failed to generate the itinerary. Please try again in a moment.",
     noValidItinerary: "Error returning the itinerary, please try again later.",
@@ -280,6 +280,8 @@ export async function POST(request: Request) {
     );
   }
 
+  // Mangaai doesn't require API key
+
   const userPrompt = USER_PROMPTS[lang]({
     destination,
     days,
@@ -321,27 +323,20 @@ export async function POST(request: Request) {
       console.error(
         `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
-      
-      if (response.status === 429) {
+      if (response.status === 429 || response.errorType === "rate_limit") {
         return NextResponse.json(
-          { error: errors.apiFailed },
+          { error: errors.rateLimitExceeded ?? errors.apiFailed },
           { status: 429 },
         );
-      } else if (response.errorType === "rate_limit") {
-        return NextResponse.json(
-          { error: errors.rateLimitExceeded },
-          { status: 430 },
-        );
-      } else {
-        return NextResponse.json(
-          { error: errors.apiFailed },
-          { status: 502 },
-        );
       }
+      return NextResponse.json(
+        { error: errors.apiFailed },
+        { status: 502 },
+      );
     }
 
     const data = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
+      candidates?: { message?: { content?: string } }[];
       error?: { message?: string };
     };
 
@@ -353,7 +348,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = data.choices?.[0]?.message?.content;
+    const content = data.candidates?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidItinerary },
@@ -363,7 +358,7 @@ export async function POST(request: Request) {
 
     let itinerary: Roteiro;
     try {
-      itinerary = JSON.parse(extractJson(content)) as Roteiro;
+      itinerary = JSON.parse(content) as Roteiro;
     } catch {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(

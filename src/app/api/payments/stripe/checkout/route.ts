@@ -6,7 +6,7 @@ import { getTranslation } from '@/lib/i18n-server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, currency, successUrl, cancelUrl } = body;
+    const { planId, currency, provider, successUrl, cancelUrl } = body;
 
     const plans = getAllPlans();
     const plan = plans.find(p => p.id === planId);
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         userEmail: user.email,
         userName: user.name,
-        successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan_id=${plan.id}&provider=${provider}`,
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'stripe',
         lang: 'pt',

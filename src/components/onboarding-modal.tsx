@@ -219,7 +219,9 @@ export function OnboardingModal({
 
       const response = await fetch("/api/itinerary", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": "Bearer ${process.env.FREEAI_API_KEY}",
+          "Content-Type": "application/json"},
         body: JSON.stringify({
           ...input,
           plan: localStorage.getItem('rutawaynow-plan'),
@@ -375,6 +377,7 @@ export function OnboardingModal({
                 </p>
               </div>
 
+            
               {itinerary && (
                 <div className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-1 sm:max-h-64">
                   {itinerary.dias.map((dia) => (
@@ -443,6 +446,7 @@ export function OnboardingModal({
                   ))}
                 </div>
               )}
+            
 
               <div className="mt-5 flex gap-3">
                 <button
@@ -485,7 +489,7 @@ export function OnboardingModal({
                       });
                     }
                     onClose();
-                    setTimeout(reset, 300);
+                    setTimeout(reset, 900);
                   }}
                   className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm shadow-indigo-600/25 transition hover:bg-indigo-500 active:bg-indigo-700"
                 >

@@ -74,9 +74,10 @@ export function getPlanStatus(): PlanStatus {
   const maxItineraries = PLAN_LIMITS[planType] || 0;
 
   // For single plan, check if already used
+  // If usage data is missing but plan exists, assume limit was reached (conservative)
   if (plan === 'single') {
     const used = localStorage.getItem('rutawaynow-single-used');
-    const usedCount = used ? parseInt(used, 10) : 0;
+    const usedCount = used ? parseInt(used, 10) : 1; // Conservative: assume used if missing
     const remaining = Math.max(0, 1 - usedCount);
 
     return {
@@ -94,14 +95,15 @@ export function getPlanStatus(): PlanStatus {
   }
 
   // For subscription plans, we need to track usage
-  // We'll store usage in localStorage with format: rutawaynow-usage-{planType}-{periodKey}
+  // If usage data is missing but plan exists, assume limit was reached (conservative)
   const periodKey = planType === 'monthly'
     ? new Date().toISOString().slice(0, 7) // YYYY-MM for monthly
     : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString(); // fortnight periods
 
   const usageKey = `rutawaynow-usage-${plan}-${periodKey}`;
   const used = localStorage.getItem(usageKey);
-  const usedCount = used ? parseInt(used, 10) : 0;
+  // Conservative: assume limit reached if usage data is missing
+  const usedCount = used ? parseInt(used, 10) : maxItineraries;
   const remaining = Math.max(0, maxItineraries - usedCount);
 
   return {
