@@ -318,7 +318,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      const errorStatus = 0;
+      errorStatus = 0;
       console.error(
         `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
