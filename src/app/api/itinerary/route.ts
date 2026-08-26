@@ -318,23 +318,20 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      errorStatus = 0;
       console.error(
         `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
       
       if (response.status === 429) {
-        errorStatus = 429;
         return NextResponse.json(
           { error: errors.apiFailed },
-          { status: errorStatus },
+          { status: 429 },
         );
       }
       if (response.errorType === "rate_limit") {
-        errorStatus = 430;
         return NextResponse.json(
           { error: errors.rateLimitExceeded },
-          { status: errorStatus },
+          { status: 430 },
         );
       }
       
