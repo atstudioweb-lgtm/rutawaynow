@@ -15,10 +15,10 @@ export function CheckoutSuccessContent() {
     const planId = searchParams.get('plan_id');
     const providerParam = searchParams.get('provider');
 
-    if (sessionId || planId) {
-      // Use planId from URL if available and non-empty, otherwise preserve existing localStorage plan
-      const plan = planId && planId.trim() ? planId : localStorage.getItem('rutawaynow-plan') || 'monthly';
-      const provider = providerParam && providerParam.trim() ? providerParam : localStorage.getItem('rutawaynow-plan-provider') || 'stripe';
+if (sessionId || planId) {
+      // Use planId from URL if available, otherwise default to 'monthly'
+      const plan = planId && planId.trim() ? planId : 'monthly';
+      const provider = providerParam || 'stripe';
       const expiry = new Date();
       
       // Set expiry based on plan
