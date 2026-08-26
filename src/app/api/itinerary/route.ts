@@ -336,7 +336,7 @@ export async function POST(request: Request) {
     }
 
     const data = (await response.json()) as {
-      candidates?: { message?: { content?: string } }[];
+      choices?: { message?: { content?: string } }[];
       error?: { message?: string };
     };
 
@@ -348,7 +348,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = data.candidates?.[0]?.message?.content;
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
         { error: errors.noValidItinerary },
@@ -358,7 +358,7 @@ export async function POST(request: Request) {
 
     let itinerary: Roteiro;
     try {
-      itinerary = JSON.parse(content) as Roteiro;
+      itinerary = JSON.parse(extractJson(content)) as Roteiro;
     } catch {
       console.error("[itinerary] JSON parse failed, raw content:", content.substring(0, 500));
       return NextResponse.json(
