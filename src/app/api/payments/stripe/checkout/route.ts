@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       userEmail: user.email,
       userName: user.name,
-      successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan_id=${plan.id}&provider=${provider}`,
+      successUrl: `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: cancelUrl || `${baseUrl}/pricing`,
       provider: 'stripe',
       lang: 'pt',
