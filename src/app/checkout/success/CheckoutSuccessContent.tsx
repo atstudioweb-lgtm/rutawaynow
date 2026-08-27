@@ -4,9 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useI18n } from '@/i18n/provider';
 import { Icon } from '@/components/icons';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export function CheckoutSuccessContent() {
   const { t } = useI18n();
@@ -18,16 +15,22 @@ export function CheckoutSuccessContent() {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     
-    // Retrieve plan from Stripe session
+    // Retrieve plan from Stripe session via API route
     (async () => {
       try {
-        const stripe = await stripePromise;
-        if (!stripe) {
-          throw new Error('Stripe failed to load');
+        if (!sessionId) {
+          throw new Error('No session ID');
         }
-        const session = await stripe.retrieveSession(sessionId!);
-        const planType = session.metadata?.planType;
-        setPlan(planType);
+        const response = await fetch(`/api/stripe/session/${sessionId}`);
+        const data = await response.json();
+        if (data.planType) {
+          setPlan(data.planType);
+        } else {
+          // Fallback to URL param or monthly
+          const planId = searchParams.get('plan_id');
+          const plan = planId && planId.trim() ? planId : 'monthly';
+          setPlan(plan);
+        }
       } catch (error) {
         console.error('Failed to retrieve Stripe session:', error);
         // Fallback to URL param or monthly
