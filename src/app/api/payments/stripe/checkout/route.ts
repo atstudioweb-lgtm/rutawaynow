@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       // Pass translated strings
       planName: t(plan.nameKey),
       planDescription: t(plan.descriptionKey),
-      itineraryText: t(pricing.itinerary) ${t(plan.itineraries > 1 ? 's' : '')},
+      itineraryText: t(pricing.itinerary) t(plan.itineraries > 1 ? 's' : ''),
       intervalText: plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '',
     });
 
