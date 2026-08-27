@@ -7,10 +7,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const { sessionId } = await params;
+    const { sessionId } = await context.params;
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 });
     }
