@@ -16,12 +16,11 @@ export async function GET(
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 });
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['metadata'],
-    });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
+    const meta = session.metadata as Record<string, string> | null;
     return NextResponse.json({
-      planType: session.metadata?.planType,
+      planType: meta?.planType ?? meta?.plan_id,
     });
   } catch (error) {
     console.error('Failed to retrieve Stripe session:', error);
