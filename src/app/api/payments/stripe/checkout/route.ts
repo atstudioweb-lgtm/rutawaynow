@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
-import { getTranslation } from '@/lib/i18n/server';
+import { getTranslation } from '@/lib/i18n-server';
 
 export async function POST(req: NextRequest) {
   try {
