@@ -6,7 +6,7 @@ import { getTranslation } from '@/lib/i18n-server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, currency, provider, successUrl, cancelUrl } = body;
+    const { planId, currency, provider, successUrl: bodySuccessUrl, cancelUrl } = body;
 
     const plans = getAllPlans();
     const plan = plans.find(p => p.id === planId);
