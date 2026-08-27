@@ -238,10 +238,16 @@ export function OnboardingModal({
       setItinerary(data);
       setDone(true);
       
-      // Increment usage after successful generation
-      const planStatus = getPlanStatus();
-      if (planStatus.hasActivePlan && planStatus.planType) {
-        incrementUsage(planStatus.planType);
+      // Increment usage after successful generation - handle single explicitly to guarantee quota
+      const planStatus2 = getPlanStatus();
+      if (planStatus2.hasActivePlan && planStatus2.planType) {
+        if (planStatus2.planType === 'single') {
+          const used = localStorage.getItem('rutawaynow-single-used');
+          const usedCount = used ? parseInt(used, 10) : 0;
+          localStorage.setItem('rutawaynow-single-used', String(usedCount + 1));
+        } else {
+          incrementUsage(planStatus2.planType);
+        }
       }
     } catch (err) {
       setError(
