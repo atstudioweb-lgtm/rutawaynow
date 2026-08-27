@@ -25,7 +25,17 @@ export async function POST(req: NextRequest) {
 
     const { t } = getTranslation('pt');
 
+    const successUrl = `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}&session_id={CHECKOUT_SESSION_ID}`;
+    console.log('SUCCESS URL SENT TO STRIPE:', successUrl);
+    console.log('baseUrl:', baseUrl);
+
     const result = await createStripeCheckoutSession({
+      plan,
+      currency: currency as 'BRL' | 'USD' | 'EUR',
+      userId: user.id,
+      userEmail: user.email,
+      userName: user.name,
+      successUrl: `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}&session_id={CHECKOUT_SESSION_ID}`,
       plan,
       currency: currency as 'BRL' | 'USD' | 'EUR',
       userId: user.id,
