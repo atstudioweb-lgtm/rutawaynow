@@ -123,6 +123,13 @@ export function getPlanStatus(): PlanStatus {
 export function incrementUsage(plan: string): void {
   if (typeof window === 'undefined') return;
 
+  if (plan === 'single') {
+    const used = localStorage.getItem('rutawaynow-single-used');
+    const usedCount = used ? parseInt(used, 10) : 0;
+    localStorage.setItem('rutawaynow-single-used', String(usedCount + 1));
+    return;
+  }
+
   const periodKey = plan === 'monthly'
     ? new Date().toISOString().slice(0, 7) // YYYY-MM for monthly
     : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString(); // fortnight periods
@@ -135,6 +142,15 @@ export function incrementUsage(plan: string): void {
 
 export function decrementUsage(plan: string): void {
   if (typeof window === 'undefined') return;
+
+  if (plan === 'single') {
+    const used = localStorage.getItem('rutawaynow-single-used');
+    const usedCount = used ? parseInt(used, 10) : 0;
+    if (usedCount > 0) {
+      localStorage.setItem('rutawaynow-single-used', String(usedCount - 1));
+    }
+    return;
+  }
 
   const periodKey = plan === 'monthly' 
     ? new Date().toISOString().slice(0, 7) // YYYY-MM for monthly
