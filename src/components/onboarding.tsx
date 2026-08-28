@@ -25,7 +25,7 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
       setOpen(true);
     } else {
       setOpen(false);
-      setPlanError(t(planStatus.message) || t("errors.noActivePlan"));
+      setPlanError(planStatus.message || t("errors.noActivePlan"));
       // Redirect to pricing after showing error
       setTimeout(() => router.push('/pricing'), 3000);
     }
@@ -52,7 +52,7 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
           <div className="max-w-sm rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-lg">
             <div className="flex items-start gap-2">
               <Icon name="alert" className="h-5 w-5 text-rose-600 shrink-0" />
-              <p className="text-sm text-rose-700">{planError}</p>
+              <p className="text-sm text-rose-700">t({planError})</p>
             </div>
           </div>
         </div>
