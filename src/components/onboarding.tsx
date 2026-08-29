@@ -25,7 +25,7 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
       setOpen(true);
     } else {
       setOpen(false);
-      setPlanError(t("planStatus.message") || t("errors.noActivePlan"));
+      setPlanError(planStatus.message || t("errors.noActivePlan"));
       // Redirect to pricing after showing error
       setTimeout(() => router.push('/pricing'), 2500);
     }
