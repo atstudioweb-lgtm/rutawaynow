@@ -27,7 +27,7 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
     items: [{
       id: params.plan.id,
       title: `RutawayNow - ${t(params.plan.nameKey)}`,
-      description: `${params.plan.itineraries} ${t('pricing.itinerary' + (params.plan.itineraries > 1 ? 's' : ''))}${params.plan.interval ? ` / ${t(params.plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : ''}`,
+      description: `${params.plan.itineraries} ${t(params.plan.itineraries > 1 ? 'pricing.itineraries' : 'pricing.itinerary')}${params.plan.interval ? ` / ${t(params.plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : ''}`,
       quantity: 1,
       currency_id: 'BRL',
       unit_price: amount,

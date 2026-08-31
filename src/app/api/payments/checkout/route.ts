@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Translate plan name and description for Stripe checkout
     const planName = t(plan.nameKey);
     const planDescription = t(plan.descriptionKey);
-    const itineraryText = t(`pricing.itinerary`);
+    const itineraryText = t(plan.itineraries > 1 ? 'pricing.itineraries' : 'pricing.itinerary');
     const intervalText = plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '';
 
     if (provider === 'stripe') {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         // Pass translated strings for Stripe
         planName: t(plan.nameKey),
         planDescription: t(plan.descriptionKey),
-        itineraryText: t(`pricing.itinerary${plan.itineraries > 1 ? 's' : ''}`),
+        itineraryText: t(plan.itineraries > 1 ? 'pricing.itineraries' : 'pricing.itinerary'),
         intervalText: plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '',
       });
 
