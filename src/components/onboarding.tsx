@@ -13,13 +13,13 @@ type OnboardingProps = {
 };
 
 export function Onboarding({ onGenerated }: OnboardingProps) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
 
   const handleClick = () => {
-    const planStatus = getPlanStatus();
+    const planStatus = getPlanStatus(lang);
     if (planStatus.hasActivePlan && planStatus.canGenerate) {
       setPlanError(null);
       setOpen(true);

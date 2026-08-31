@@ -186,6 +186,18 @@ export const pt = {
     unexpectedRoteiro: "Erro inesperado ao gerar o roteiro.",
     unexpectedChecklist: "Erro inesperado ao gerar o checklist.",
   },
+  plan: {
+    noActive: "Nenhum plano ativo",
+    noPlan: "Nenhum plano ativo. Adquira um plano para gerar roteiros.",
+    expired: "Seu plano expirou. Renove para continuar gerando roteiros.",
+    singleAvailable: "Você tem 1 roteiro disponível no seu plano Avulso.",
+    singleUsed:
+      "Você já utilizou seu roteiro do plano Avulso. Adquira outro plano para continuar.",
+    available:
+      "Você tem {remaining} de {max} roteiros disponíveis no seu plano {name}.",
+    limitReached:
+      "Você atingiu o limite de {max} roteiros no seu plano {name}. Aguarde o próximo período ou adquira outro plano.",
+  },
   pricing: {
     title: "Escolha seu plano",
     subtitle: "Comece a planejar suas viagens hoje",

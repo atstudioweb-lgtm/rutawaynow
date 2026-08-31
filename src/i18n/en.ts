@@ -188,6 +188,18 @@ export const en: Messages = {
     unexpectedRoteiro: "Unexpected error while generating the itinerary.",
     unexpectedChecklist: "Unexpected error while generating the checklist.",
   },
+  plan: {
+    noActive: "No active plan",
+    noPlan: "No active plan. Purchase a plan to generate itineraries.",
+    expired: "Your plan has expired. Renew to continue generating itineraries.",
+    singleAvailable: "You have 1 itinerary available on your Single plan.",
+    singleUsed:
+      "You have already used your Single plan itinerary. Purchase another plan to continue.",
+    available:
+      "You have {remaining} of {max} itineraries available on your {name} plan.",
+    limitReached:
+      "You have reached the limit of {max} itineraries on your {name} plan. Wait for the next period or purchase another plan.",
+  },
   pricing: {
     title: "Choose your plan",
     subtitle: "Start planning your trips today",

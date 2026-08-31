@@ -146,7 +146,7 @@ export function OnboardingModal({
         : step === 3
           ? budget !== null
           : true;
-  const planStatus = getPlanStatus();
+  const planStatus = getPlanStatus(lang);
   const canGenerate = styles.length > 0 && planStatus.canGenerate;
   const totalTravelers = adults + teens + children;
 
@@ -203,7 +203,7 @@ export function OnboardingModal({
     if (!canGenerate || generating) return;
 
     // Check plan status before generating
-    const planStatus = getPlanStatus();
+    const planStatus = getPlanStatus(lang);
     if (!planStatus.canGenerate) {
       setError(planStatus.message || t("errors.generateRoteiro"));
       return;
@@ -239,7 +239,7 @@ export function OnboardingModal({
       setDone(true);
       
       // Increment usage after successful generation - handle single explicitly to guarantee quota
-      const planStatus2 = getPlanStatus();
+      const planStatus2 = getPlanStatus(lang);
       if (planStatus2.hasActivePlan && planStatus2.planType) {
         if (planStatus2.planType === 'single') {
           const used = localStorage.getItem('rutawaynow-single-used');

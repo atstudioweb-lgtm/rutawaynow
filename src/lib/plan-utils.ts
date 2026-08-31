@@ -17,13 +17,41 @@ const PLAN_LIMITS = {
   monthly: 10,
 } as const;
 
-const PLAN_NAMES: Record<string, string> = {
-  single: 'Avulso',
-  fortnightly: 'Quinzenal',
-  monthly: 'Mensal',
+const PLAN_NAMES: Record<string, Record<string, string>> = {
+  pt: { single: 'Avulso', fortnightly: 'Quinzenal', monthly: 'Mensal' },
+  en: { single: 'Single', fortnightly: 'Fortnightly', monthly: 'Monthly' },
 };
 
-export function getPlanStatus(): PlanStatus {
+const PLAN_MESSAGES = {
+  pt: {
+    noActive: 'Nenhum plano ativo',
+    noPlan: 'Nenhum plano ativo. Adquira um plano para gerar roteiros.',
+    expired: 'Seu plano expirou. Renove para continuar gerando roteiros.',
+    singleAvailable: 'Você tem 1 roteiro disponível no seu plano Avulso.',
+    singleUsed: 'Você já utilizou seu roteiro do plano Avulso. Adquira outro plano para continuar.',
+    available: 'Você tem {remaining} de {max} roteiros disponíveis no seu plano {name}.',
+    limitReached: 'Você atingiu o limite de {max} roteiros no seu plano {name}. Aguarde o próximo período ou adquira outro plano.',
+  },
+  en: {
+    noActive: 'No active plan',
+    noPlan: 'No active plan. Purchase a plan to generate itineraries.',
+    expired: 'Your plan has expired. Renew to continue generating itineraries.',
+    singleAvailable: 'You have 1 itinerary available on your Single plan.',
+    singleUsed: 'You have already used your Single plan itinerary. Purchase another plan to continue.',
+    available: 'You have {remaining} of {max} itineraries available on your {name} plan.',
+    limitReached: 'You have reached the limit of {max} itineraries on your {name} plan. Wait for the next period or purchase another plan.',
+  },
+};
+
+function format(msg: string, params: Record<string, string | number>): string {
+  return msg.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
+}
+
+export function getPlanStatus(lang: string = 'pt'): PlanStatus {
+  const l = lang === 'en' ? 'en' : 'pt';
+  const msgs = PLAN_MESSAGES[l as keyof typeof PLAN_MESSAGES];
+  const names = PLAN_NAMES[l];
+
   if (typeof window === 'undefined') {
     return {
       hasActivePlan: false,
@@ -33,7 +61,7 @@ export function getPlanStatus(): PlanStatus {
       maxItineraries: 0,
       expiryDate: null,
       canGenerate: false,
-      message: 'Nenhum plano ativo',
+      message: msgs.noActive,
     };
   }
 
@@ -50,7 +78,7 @@ export function getPlanStatus(): PlanStatus {
       maxItineraries: 0,
       expiryDate: null,
       canGenerate: false,
-      message: 'Nenhum plano ativo. Adquira um plano para gerar roteiros.',
+      message: msgs.noPlan,
     };
   }
 
@@ -61,12 +89,12 @@ export function getPlanStatus(): PlanStatus {
     return {
       hasActivePlan: false,
       planType: plan as PlanType,
-      planName: PLAN_NAMES[plan] || plan,
+      planName: names[plan] || plan,
       remainingItineraries: 0,
       maxItineraries: PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || 0,
       expiryDate,
       canGenerate: false,
-      message: 'Seu plano expirou. Renove para continuar gerando roteiros.',
+      message: msgs.expired,
     };
   }
 
@@ -83,14 +111,12 @@ export function getPlanStatus(): PlanStatus {
     return {
       hasActivePlan: true,
       planType: 'single',
-      planName: PLAN_NAMES.single,
+      planName: names.single,
       remainingItineraries: remaining,
       maxItineraries: 1,
       expiryDate,
       canGenerate: remaining > 0,
-      message: remaining > 0 
-        ? 'Você tem 1 roteiro disponível no seu plano Avulso.'
-        : 'Você já utilizou seu roteiro do plano Avulso. Adquira outro plano para continuar.',
+      message: remaining > 0 ? msgs.singleAvailable : msgs.singleUsed,
     };
   }
 
@@ -109,14 +135,14 @@ export function getPlanStatus(): PlanStatus {
   return {
     hasActivePlan: true,
     planType,
-    planName: PLAN_NAMES[plan] || plan,
+    planName: names[plan] || plan,
     remainingItineraries: remaining,
     maxItineraries: maxItineraries,
     expiryDate,
     canGenerate: remaining > 0,
     message: remaining > 0
-      ? `Você tem ${remaining} de ${maxItineraries} roteiros disponíveis no seu plano ${PLAN_NAMES[plan]}.`
-      : `Você atingiu o limite de ${maxItineraries} roteiros no seu plano ${PLAN_NAMES[plan]}. Aguarde o próximo período ou adquira outro plano.`,
+      ? format(msgs.available, { remaining, max: maxItineraries, name: names[plan] || plan })
+      : format(msgs.limitReached, { max: maxItineraries, name: names[plan] || plan }),
   };
 }
 
