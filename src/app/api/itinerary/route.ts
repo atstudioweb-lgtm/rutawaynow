@@ -269,15 +269,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.stylesRequired }, { status: 400 });
   }
 
-  // Validate user's plan
-  const plan = body?.plan as string | undefined;
-  const planExpiry = body?.planExpiry as string | undefined;
-  const planValidation = validatePlan(plan || null, planExpiry || null);
-  if (!planValidation.valid) {
-    return NextResponse.json(
-      { error: planValidation.message || 'Plano inválido ou sem créditos.' },
-      { status: 403 },
-    );
+  // Validate user's plan - server-side if logged in, fallback to localStorage for anon
+  const { auth } = await import('@/lib/auth');
+  const session = await auth();
+  let serverSubscriptionId: string | null = null;
+  if (session?.user?.id) {
+    const { getServerPlanStatus } = await import('@/lib/server-plan');
+    const serverStatus = await getServerPlanStatus((session.user as { id: string }).id, lang);
+    if (!serverStatus.canGenerate) {
+      return NextResponse.json({ error: serverStatus.message || 'Plano inválido ou sem créditos.' }, { status: 403 });
+    }
+    serverSubscriptionId = (serverStatus as unknown as { subscriptionId?: string }).subscriptionId ?? null;
+  } else {
+    const plan = body?.plan as string | undefined;
+    const planExpiry = body?.planExpiry as string | undefined;
+    const planValidation = validatePlan(plan || null, planExpiry || null);
+    if (!planValidation.valid) {
+      return NextResponse.json(
+        { error: planValidation.message || 'Plano inválido ou sem créditos.' },
+        { status: 403 },
+      );
+    }
   }
 
   const userPrompt = USER_PROMPTS[lang]({
@@ -370,6 +382,36 @@ export async function POST(request: Request) {
         { error: errors.noValidItinerary },
         { status: 502 },
       );
+    }
+
+    // Persist to user account if logged in (server-side plan)
+    try {
+      const { auth: auth2 } = await import('@/lib/auth');
+      const sess2 = await auth2();
+      if (sess2?.user?.id) {
+        const { PrismaClient: PC2 } = await import('@prisma/client');
+        const prisma2 = new PC2();
+        await prisma2.itinerary.create({
+          data: {
+            userId: (sess2.user as { id: string }).id,
+            subscriptionId: serverSubscriptionId,
+            destination,
+            month,
+            days,
+            budget,
+            adults,
+            teens,
+            children,
+            styles,
+            lang,
+            roteiro: itinerary as unknown as object,
+          },
+        });
+        const { incrementServerUsage } = await import('@/lib/server-plan');
+        await incrementServerUsage((sess2.user as { id: string }).id);
+      }
+    } catch (e) {
+      console.error('[itinerary] Failed to persist to user account', e);
     }
 
     return NextResponse.json(itinerary);

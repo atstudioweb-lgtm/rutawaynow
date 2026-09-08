@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  itineraries   Itinerary[]
+  checklists    Checklist[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  userId         String
+  planId         String // single | fortnightly | monthly
+  provider       String // stripe | mercadopago
+  status         String   @default("active") // active | expired | cancelled
+  startAt        DateTime @default(now())
+  expiryAt       DateTime
+  usedCount      Int      @default(0)
+  maxItineraries Int
+  periodKey      String? // YYYY-MM or fortnight number for period tracking
+  stripeSessionId String? @unique
+  stripeSubscriptionId String? @unique
+  mercadoPagoId  String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiryAt])
+  @@index([userId, status])
+}
+
+model Itinerary {
+  id             String   @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  destination    String
+  month          String
+  days           Int
+  budget         String
+  adults         Int
+  teens          Int
+  children       Int
+  styles         Json // string[]
+  styleIds       Json? // string[]
+  lang           String
+  roteiro        Json // Roteiro JSON
+  pdfUrl         String?
+  pdfBlobKey     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  checklists     Checklist[]
+
+  @@index([userId, createdAt])
+}
+
+model Checklist {
+  id          String    @id @default(cuid())
+  userId      String
+  itineraryId String?
+  items       Json
+  lang        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itinerary   Itinerary? @relation(fields: [itineraryId], references: [id])
+
+  @@index([userId, createdAt])
+}

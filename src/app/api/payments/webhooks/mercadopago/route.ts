@@ -1,5 +1,7 @@
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+const PLAN_LIMITS_MP: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
 
 const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET!;
 

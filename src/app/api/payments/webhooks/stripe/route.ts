@@ -1,6 +1,8 @@
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/payments/stripe/client';
+import { prisma } from '@/lib/prisma';
+const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -59,19 +61,35 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutCompleted(session: any) {
   const userId = session.client_reference_id;
   const planId = session.metadata?.plan_id;
-  const currency = session.metadata?.currency;
-  const isSubscription = session.mode === 'subscription';
+  if (!userId || !planId) {
+    console.warn('Missing userId or planId in checkout session', session.id);
+    return;
+  }
+  const max = PLAN_LIMITS[planId] ?? 0;
+  const now = new Date();
+  const expiry = new Date(now);
+  if (planId === 'fortnightly') expiry.setDate(expiry.getDate() + 14);
+  else if (planId === 'monthly') expiry.setMonth(expiry.getMonth() + 1);
+  else expiry.setFullYear(expiry.getFullYear() + 10);
 
-  console.log('Stripe checkout completed:', { userId, planId, currency, isSubscription });
+  const periodKey = planId === 'monthly' ? now.toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
 
-  // TODO: Update user subscription in database
-  // await db.updateUserSubscription(userId, {
-  //   planId,
-  //   currency,
-  //   stripeCustomerId: session.customer,
-  //   stripeSubscriptionId: session.subscription,
-  //   status: 'active',
-  // });
+  await prisma.subscription.create({
+    data: {
+      userId,
+      planId,
+      provider: 'stripe',
+      status: 'active',
+      startAt: now,
+      expiryAt: expiry,
+      maxItineraries: max,
+      usedCount: 0,
+      periodKey: planId === 'single' ? null : periodKey,
+      stripeSessionId: session.id,
+      stripeSubscriptionId: session.subscription as string | null,
+    },
+  });
+  console.log('Created subscription', { userId, planId });
 }
 
 async function handleSubscriptionUpdated(subscription: any) {
