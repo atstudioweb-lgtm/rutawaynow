@@ -202,8 +202,17 @@ export function OnboardingModal({
   const handleGenerate = async () => {
     if (!canGenerate || generating) return;
 
-    // Check plan status before generating
-    const planStatus = getPlanStatus(lang);
+    // Check plan status before generating - try server first if logged in, fallback to localStorage
+    let planStatus = getPlanStatus(lang);
+    try {
+      const res = await fetch("/api/user/subscriptions");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status?.hasActivePlan) planStatus = { hasActivePlan: data.status.hasActivePlan, planType: data.status.planType, planName: data.status.planName, remainingItineraries: data.status.remaining, maxItineraries: data.status.max, expiryDate: data.status.expiry ? new Date(data.status.expiry) : null, canGenerate: data.status.canGenerate, message: data.status.message } as never;
+        // if server has no plan, keep localStorage planStatus (allows immediate post-purchase before webhook)
+        if (!data.status?.hasActivePlan) planStatus = getPlanStatus(lang);
+      }
+    } catch {}
     if (!planStatus.canGenerate) {
       setError(planStatus.message || t("errors.generateRoteiro"));
       return;
