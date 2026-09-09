@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { generateTripPdf } from "@/lib/pdf";
 import { mapTripResult } from "@/data/trip";
 import type { Roteiro } from "@/types/itinerary";
@@ -10,9 +12,10 @@ type It = { id: string; destination: string; month: string; days: number; budget
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [subs, setSubs] = useState<Sub[]>([]);
   const [its, setIts] = useState<It[]>([]);
-  const [planStatus, setPlanStatus] = useState<{ remaining: number; max: number; planName: string; message: string } | null>(null);
+  const [planStatus, setPlanStatus] = useState<{ hasActivePlan?: boolean; remaining: number; max: number; planName: string; message: string } | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -68,25 +71,48 @@ export default function AccountPage() {
 
         <section className="rounded-2xl bg-white p-6 shadow">
           <h2 className="font-semibold">Plano atual</h2>
-          {planStatus ? <p className="text-sm mt-2">{planStatus.message} — {planStatus.remaining}/{planStatus.max} • {planStatus.planName}</p> : <p className="text-sm text-slate-500">Carregando plano...</p>}
-          <div className="mt-4 space-y-2">
-            {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{s.planId} — {s.status} — expira {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
-            {subs.length===0 && <p className="text-sm text-slate-500">Nenhuma assinatura encontrada. Compre em /pricing.</p>}
-          </div>
+          {planStatus ? (
+            planStatus.hasActivePlan ? (
+              <>
+                <p className="text-sm mt-2">{planStatus.message}</p>
+                <p className="text-xs text-slate-500 mt-1">{planStatus.remaining} de {planStatus.max} roteiros disponíveis • Plano {planStatus.planName}</p>
+              </>
+            ) : (
+              <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
+                <p className="text-sm font-medium text-amber-900">{planStatus.message}</p>
+                <p className="text-xs text-amber-700 mt-1">Escolha um plano para começar a gerar roteiros personalizados.</p>
+                <Link href="/pricing" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Ver planos</Link>
+              </div>
+            )
+          ) : <p className="text-sm text-slate-500">Carregando plano...</p>}
+          {subs.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Histórico de assinaturas</h3>
+              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{s.planId} — {s.status === 'active' ? 'Ativo' : s.status} — expira {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
+            </div>
+          )}
         </section>
 
         <section className="rounded-2xl bg-white p-6 shadow">
-          <h2 className="font-semibold">Roteiros gerados ({its.length})</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Roteiros gerados ({its.length})</h2>
+            {its.length > 0 && <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">+ Novo roteiro</Link>}
+          </div>
           <div className="mt-4 grid gap-3">
-            {its.map(it=> (
+            {its.length > 0 ? its.map(it=> (
               <div key={it.id} className="rounded-xl border p-4 flex items-center justify-between">
-                <div><div className="font-medium">{it.destination} — {it.days} dias • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang}</div></div>
+                <div><div className="font-medium">{it.destination} — {it.days} dias • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
-                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white">Baixar PDF</a> : <button onClick={()=>handlePdf(it)} className="rounded-lg border px-3 py-1.5 text-sm">Gerar PDF</button>}
+                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white">Baixar PDF</a> : <button onClick={()=>handlePdf(it)} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50">Gerar PDF</button>}
                 </div>
               </div>
-            ))}
-            {its.length===0 && <p className="text-sm text-slate-500">Nenhum roteiro ainda. Gere seu primeiro em /.</p>}
+            )) : (
+              <div className="rounded-xl border border-dashed p-6 text-center">
+                <p className="text-sm font-medium text-slate-900">Nenhum roteiro ainda</p>
+                <p className="text-xs text-slate-500 mt-1">Gere seu primeiro roteiro personalizado em poucos passos.</p>
+                <Link href="/" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Planejar viagem</Link>
+              </div>
+            )}
           </div>
         </section>
       </div>
