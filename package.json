@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "prisma generate --schema=./prisma/schema.prisma || true && next build --webpack",
-    "postinstall": "prisma generate || true",
+    "build": "prisma generate && prisma db push --accept-data-loss && next build --webpack",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint"
   },
