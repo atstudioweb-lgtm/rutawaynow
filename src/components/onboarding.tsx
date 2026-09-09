@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { useI18n } from "@/i18n/provider";
+import { useSession } from "next-auth/react";
 import type { TripResult } from "@/types/itinerary";
 import { getPlanStatus } from "@/lib/plan-utils";
 
@@ -15,10 +16,17 @@ type OnboardingProps = {
 export function Onboarding({ onGenerated }: OnboardingProps) {
   const { t, lang } = useI18n();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    // Verification on Planejar viagem click as requested
+    if (status === "loading") return;
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
     const planStatus = getPlanStatus(lang);
     if (planStatus.hasActivePlan && planStatus.canGenerate) {
       setPlanError(null);
