@@ -11,6 +11,8 @@ import { getSampleTrip, mapTripResult } from "@/data/trip";
 import { generateTripPdf } from "@/lib/pdf";
 import { useI18n } from "@/i18n/provider";
 import { LANGUAGES } from "@/i18n/languages";
+import { useSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import type {
   Checklist,
   Roteiro,
@@ -36,6 +38,7 @@ function loadFavorites(): Record<string, number[]> {
 
 export function Dashboard() {
   const { t, lang, messages } = useI18n();
+  const { data: session, status } = useSession();
   const [tripResult, setTripResult] = useState<TripResult | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
@@ -349,16 +352,16 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
           <Onboarding onGenerated={handleGenerated} />
           <LanguageSwitcher />
-          <button
-            type="button"
-            className="hidden items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:inline-flex"
-          >
-            <Icon name="users" className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("dashboard.invite")}</span>
-          </button>
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-xs font-bold text-white">
-            MC
-          </span>
+          {status === "authenticated" ? (
+            <>
+              <Link href="/account" className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Minha conta</Link>
+              <Link href="/account" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-xs font-bold text-white overflow-hidden">
+                {session?.user?.image ? <img src={session.user.image} alt="" className="h-9 w-9 rounded-full object-cover" /> : (session?.user?.name?.[0] ?? "U")}
+              </Link>
+            </>
+          ) : (
+            <button onClick={() => signIn("google", { callbackUrl: "/account" })} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Entrar</button>
+          )}
         </div>
       </header>
 
