@@ -343,6 +343,54 @@ export async function POST(request: Request) {
         `[itinerary] Free.ai responded ${response.status}: ${errorText}`,
       );
       
+      // Fallback to OpenRouter when free.ai hits daily limit (e.g., "429-Daily limit reached")
+      const isDailyLimit = response.status === 429 && /daily limit/i.test(errorText);
+      if (isDailyLimit && process.env.OPENROUTER_API_KEY) {
+        console.log("[itinerary] Daily limit reached, trying OpenRouter fallback...");
+        try {
+          const fallbackRes = await fetchWithRetry("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://rutawaynow.vercel.app",
+              "X-Title": "RutawayNow",
+            },
+            body: JSON.stringify({
+              model: process.env.OPENROUTER_MODEL || "openrouter/free",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPTS[lang] },
+                { role: "user", content: userPrompt },
+              ],
+              temperature: 0.7,
+              max_tokens: 4096,
+            }),
+          });
+          if (fallbackRes.ok) {
+            const fbData = (await fallbackRes.json()) as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
+            const fbContent = fbData.choices?.[0]?.message?.content;
+            if (fbContent) {
+              let fbItinerary: Roteiro;
+              try { fbItinerary = JSON.parse(extractJson(fbContent)) as Roteiro; } catch { throw new Error("fallback JSON parse failed"); }
+              // Persist and return fallback itinerary (reuse same persist logic below)
+              try {
+                const { auth: auth2 } = await import('@/lib/auth');
+                const sess2 = await auth2();
+                if (sess2?.user?.id) {
+                  const { PrismaClient: PC2 } = await import('@prisma/client');
+                  const prisma2 = new PC2();
+                  await prisma2.itinerary.create({ data: { userId: (sess2.user as { id: string }).id, subscriptionId: serverSubscriptionId, destination, month, days, budget, adults, teens, children, styles, lang, roteiro: fbItinerary as unknown as object } });
+                  const { incrementServerUsage } = await import('@/lib/server-plan');
+                  await incrementServerUsage((sess2.user as { id: string }).id);
+                }
+              } catch (e) { console.error('[itinerary] Fallback persist failed', e); }
+              return NextResponse.json(fbItinerary);
+            }
+          }
+          console.error("[itinerary] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
+        } catch (e) { console.error("[itinerary] Fallback error", e); }
+      }
+
       if (response.status === 429) {
         return NextResponse.json(
           { error: errors.apiFailed },
