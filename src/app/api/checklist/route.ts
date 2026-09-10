@@ -176,19 +176,32 @@ export async function POST(request: Request) {
                 { role: "user", content: userPrompt },
               ],
               temperature: 0.5,
+              response_format: { type: "json_object" } as never,
+              provider: { allow_fallbacks: true } as never,
             }),
           });
           if (fallbackRes.ok) {
-            const fbData = (await fallbackRes.json()) as { choices?: { message?: { content?: string } }[] };
-            const fbContent = fbData.choices?.[0]?.message?.content;
-            if (fbContent) {
-              try {
-                const fbChecklist = JSON.parse(extractJson(fbContent)) as Checklist;
-                return NextResponse.json(fbChecklist);
-              } catch { console.error("[checklist] Fallback JSON parse failed"); }
+            const fbData = (await fallbackRes.json()) as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
+            if (fbData.error) {
+              console.error("[checklist] OpenRouter fallback error", fbData.error);
+            } else {
+              const fbContent = fbData.choices?.[0]?.message?.content;
+              if (fbContent) {
+                console.log("[checklist] Fallback raw content preview:", fbContent.substring(0, 500));
+                try {
+                  const extracted = extractJson(fbContent);
+                  const fbChecklist = JSON.parse(extracted) as Checklist;
+                  return NextResponse.json(fbChecklist);
+                } catch (e) {
+                  console.error("[checklist] Fallback JSON parse failed, raw:", fbContent.substring(0, 1000), e);
+                }
+              } else {
+                console.error("[checklist] Fallback no content", JSON.stringify(fbData).substring(0, 500));
+              }
             }
+          } else {
+            console.error("[checklist] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
           }
-          console.error("[checklist] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
         } catch (e) { console.error("[checklist] Fallback error", e); }
       }
       if (response.status === 429 || response.errorType === "rate_limit") {
