@@ -263,6 +263,8 @@ export function Dashboard() {
       setChecklist(data);
       setChecklistLang(lang);
       setChecklistOpen(true);
+      // Persist checklist to user account if logged in (for /account history and PDF re-download)
+      fetch("/api/user/checklists", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: data, lang }) }).catch(()=>{});
     } catch (err) {
       setChecklistError(
         err instanceof Error ? err.message : t("errors.generateChecklist"),
