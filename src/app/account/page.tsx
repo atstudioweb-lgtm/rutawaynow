@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { generateTripPdf } from "@/lib/pdf";
 import { mapTripResult } from "@/data/trip";
+import { useI18n } from "@/i18n/provider";
 import type { Roteiro } from "@/types/itinerary";
 
 type Sub = { id: string; planId: string; status: string; expiryAt: string; usedCount: number; maxItineraries: number };
@@ -13,6 +14,7 @@ type It = { id: string; destination: string; month: string; days: number; budget
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useI18n();
   const [subs, setSubs] = useState<Sub[]>([]);
   const [its, setIts] = useState<It[]>([]);
   const [planStatus, setPlanStatus] = useState<{ hasActivePlan?: boolean; remaining: number; max: number; planName: string; message: string } | null>(null);
@@ -50,13 +52,13 @@ export default function AccountPage() {
     })();
   };
 
-  if (status === "loading") return <div className="p-8">Carregando...</div>;
+  if (status === "loading") return <div className="p-8">{t("account.loading")}</div>;
   if (status === "unauthenticated") return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="rounded-2xl bg-white p-8 shadow max-w-md w-full text-center">
-        <h1 className="text-xl font-bold">Área do usuário</h1>
-        <p className="text-sm text-slate-600 mt-2">Faça login para ver seus planos e roteiros.</p>
-        <button onClick={()=>signIn("google",{callbackUrl:"/account"})} className="mt-6 w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white">Entrar com Google</button>
+        <h1 className="text-xl font-bold">{t("account.userArea")}</h1>
+        <p className="text-sm text-slate-600 mt-2">{t("account.loginHint")}</p>
+        <button onClick={()=>signIn("google",{callbackUrl:"/account"})} className="mt-6 w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white">{t("account.signInGoogle")}</button>
       </div>
     </main>
   );
@@ -65,52 +67,52 @@ export default function AccountPage() {
     <main className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Minha conta — {session?.user?.email}</h1>
-          <button onClick={()=>signOut({callbackUrl:"/"})} className="text-sm text-slate-600">Sair</button>
+          <h1 className="text-2xl font-bold">{t("account.myAccount")} — {session?.user?.email}</h1>
+          <button onClick={()=>signOut({callbackUrl:"/"})} className="text-sm text-slate-600">{t("account.signOut")}</button>
         </div>
 
         <section className="rounded-2xl bg-white p-6 shadow">
-          <h2 className="font-semibold">Plano atual</h2>
+          <h2 className="font-semibold">{t("account.currentPlan")}</h2>
           {planStatus ? (
             planStatus.hasActivePlan ? (
               <>
                 <p className="text-sm mt-2">{planStatus.message}</p>
-                <p className="text-xs text-slate-500 mt-1">{planStatus.remaining} de {planStatus.max} roteiros disponíveis • Plano {planStatus.planName}</p>
+                <p className="text-xs text-slate-500 mt-1">{t("account.ofAvailable", { remaining: planStatus.remaining, max: planStatus.max, name: planStatus.planName })}</p>
               </>
             ) : (
               <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
                 <p className="text-sm font-medium text-amber-900">{planStatus.message}</p>
-                <p className="text-xs text-amber-700 mt-1">Escolha um plano para começar a gerar roteiros personalizados.</p>
-                <Link href="/pricing" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Ver planos</Link>
+                <p className="text-xs text-amber-700 mt-1">{t("account.choosePlan")}</p>
+                <Link href="/pricing" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.viewPlans")}</Link>
               </div>
             )
-          ) : <p className="text-sm text-slate-500">Carregando plano...</p>}
+          ) : <p className="text-sm text-slate-500">{t("account.loadingPlan")}</p>}
           {subs.length > 0 && (
             <div className="mt-4 space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Histórico de assinaturas</h3>
-              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{s.planId} — {s.status === 'active' ? 'Ativo' : s.status} — expira {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
+              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{s.planId} — {s.status === 'active' ? t("account.active") : s.status} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
             </div>
           )}
         </section>
 
         <section className="rounded-2xl bg-white p-6 shadow">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Roteiros gerados ({its.length})</h2>
-            {its.length > 0 && <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">+ Novo roteiro</Link>}
+            <h2 className="font-semibold">{t("account.generated")} ({its.length})</h2>
+            {its.length > 0 && <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">{t("account.newItinerary")}</Link>}
           </div>
           <div className="mt-4 grid gap-3">
             {its.length > 0 ? its.map(it=> (
               <div key={it.id} className="rounded-xl border p-4 flex items-center justify-between">
-                <div><div className="font-medium">{it.destination} — {it.days} dias • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
+                <div><div className="font-medium">{it.destination} — {it.days} {t("account.days")} • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
-                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white">Baixar PDF</a> : <button onClick={()=>handlePdf(it)} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50">Gerar PDF</button>}
+                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</a> : <button onClick={()=>handlePdf(it)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.generatePdf")}</button>}
                 </div>
               </div>
             )) : (
               <div className="rounded-xl border border-dashed p-6 text-center">
-                <p className="text-sm font-medium text-slate-900">Nenhum roteiro ainda</p>
-                <p className="text-xs text-slate-500 mt-1">Gere seu primeiro roteiro personalizado em poucos passos.</p>
-                <Link href="/" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Planejar viagem</Link>
+                <p className="text-sm font-medium text-slate-900">{t("account.noItineraries")}</p>
+                <p className="text-xs text-slate-500 mt-1">{t("account.noItinerariesHint")}</p>
+                <Link href="/" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.planTrip")}</Link>
               </div>
             )}
           </div>
