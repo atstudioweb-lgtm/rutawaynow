@@ -364,30 +364,44 @@ export async function POST(request: Request) {
               ],
               temperature: 0.7,
               max_tokens: 4096,
+              response_format: { type: "json_object" } as never,
+              provider: { allow_fallbacks: true } as never,
             }),
           });
           if (fallbackRes.ok) {
             const fbData = (await fallbackRes.json()) as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
-            const fbContent = fbData.choices?.[0]?.message?.content;
-            if (fbContent) {
-              let fbItinerary: Roteiro;
-              try { fbItinerary = JSON.parse(extractJson(fbContent)) as Roteiro; } catch { throw new Error("fallback JSON parse failed"); }
-              // Persist and return fallback itinerary (reuse same persist logic below)
-              try {
-                const { auth: auth2 } = await import('@/lib/auth');
-                const sess2 = await auth2();
-                if (sess2?.user?.id) {
-                  const { PrismaClient: PC2 } = await import('@prisma/client');
-                  const prisma2 = new PC2();
-                  await prisma2.itinerary.create({ data: { userId: (sess2.user as { id: string }).id, subscriptionId: serverSubscriptionId, destination, month, days, budget, adults, teens, children, styles, lang, roteiro: fbItinerary as unknown as object } });
-                  const { incrementServerUsage } = await import('@/lib/server-plan');
-                  await incrementServerUsage((sess2.user as { id: string }).id);
+            if (fbData.error) {
+              console.error("[itinerary] OpenRouter fallback error", fbData.error);
+            } else {
+              const fbContent = fbData.choices?.[0]?.message?.content;
+              if (fbContent) {
+                console.log("[itinerary] Fallback raw content preview:", fbContent.substring(0, 500));
+                try {
+                  const extracted = extractJson(fbContent);
+                  const fbItinerary = JSON.parse(extracted) as Roteiro;
+                  // Persist and return fallback itinerary (reuse same persist logic below)
+                  try {
+                    const { auth: auth2 } = await import('@/lib/auth');
+                    const sess2 = await auth2();
+                    if (sess2?.user?.id) {
+                      const { PrismaClient: PC2 } = await import('@prisma/client');
+                      const prisma2 = new PC2();
+                      await prisma2.itinerary.create({ data: { userId: (sess2.user as { id: string }).id, subscriptionId: serverSubscriptionId, destination, month, days, budget, adults, teens, children, styles, lang, roteiro: fbItinerary as unknown as object } });
+                      const { incrementServerUsage } = await import('@/lib/server-plan');
+                      await incrementServerUsage((sess2.user as { id: string }).id);
+                    }
+                  } catch (e) { console.error('[itinerary] Fallback persist failed', e); }
+                  return NextResponse.json(fbItinerary);
+                } catch (e) {
+                  console.error("[itinerary] Fallback JSON parse failed, raw:", fbContent.substring(0, 1000), e);
                 }
-              } catch (e) { console.error('[itinerary] Fallback persist failed', e); }
-              return NextResponse.json(fbItinerary);
+              } else {
+                console.error("[itinerary] Fallback no content", JSON.stringify(fbData).substring(0, 500));
+              }
             }
+          } else {
+            console.error("[itinerary] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
           }
-          console.error("[itinerary] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
         } catch (e) { console.error("[itinerary] Fallback error", e); }
       }
 
