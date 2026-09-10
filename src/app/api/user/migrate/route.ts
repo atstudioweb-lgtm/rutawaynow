@@ -8,9 +8,9 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = (session.user as { id: string }).id;
   const body = await req.json().catch(() => ({}));
-  // body: { plan, expiry, provider, usedCount, itineraries: [] }
-  const { plan, expiry, provider, usedCount, itineraries } = body as {
-    plan?: string; expiry?: string; provider?: string; usedCount?: number; itineraries?: unknown[];
+  // body: { plan, expiry, provider, usedCount, itineraries: [], checklists: [] }
+  const { plan, expiry, provider, usedCount, itineraries, checklists } = body as {
+    plan?: string; expiry?: string; provider?: string; usedCount?: number; itineraries?: unknown[]; checklists?: unknown[];
   };
 
   if (plan && expiry) {
@@ -50,6 +50,20 @@ export async function POST(req: NextRequest) {
             styles: (it.styles as unknown) || [],
             lang: (it.lang as string) || "pt",
             roteiro: (it.roteiro as object) || it,
+          },
+        });
+      } catch {}
+    }
+  }
+
+  if (Array.isArray(checklists)) {
+    for (const ch of checklists as Array<Record<string, unknown>>) {
+      try {
+        await prisma.checklist.create({
+          data: {
+            userId,
+            items: (ch.items as object) || ch,
+            lang: (ch.lang as string) || "pt",
           },
         });
       } catch {}

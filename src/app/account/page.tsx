@@ -36,16 +36,30 @@ export default function AccountPage() {
     });
     fetch("/api/user/itineraries").then(r=>r.json()).then(setIts);
     fetch("/api/user/checklists").then(r=>r.json()).then(setChecks).catch(()=>{});
-    const migrated = localStorage.getItem("rutawaynow-migrated");
-    if (!migrated) {
+    const doMigrate = async () => {
+      const migrated = localStorage.getItem("rutawaynow-migrated-v2");
+      if (migrated) return;
       const plan = localStorage.getItem("rutawaynow-plan");
       const expiry = localStorage.getItem("rutawaynow-plan-expiry");
       const provider = localStorage.getItem("rutawaynow-plan-provider");
       const used = localStorage.getItem("rutawaynow-single-used");
       const legacyIts: unknown[] = [];
       try { const raw = localStorage.getItem("rutawaynow:lastItinerary"); if (raw) legacyIts.push(JSON.parse(raw)); } catch {}
-      fetch("/api/user/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, expiry, provider, usedCount: used ? parseInt(used,10): undefined, itineraries: legacyIts }) }).then(()=> localStorage.setItem("rutawaynow-migrated","1"));
-    }
+      // Collect checklists from localStorage if any (try common keys)
+      const legacyChecks: unknown[] = [];
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith("rutawaynow-checklist") || k.includes("checklist")) {
+          try { const v = localStorage.getItem(k); if (v) legacyChecks.push(JSON.parse(v)); } catch {}
+        }
+      }
+      // Also try to get checklist from current session if stored in memory (will be empty on first load, but future checklists are saved via dashboard POST)
+      await fetch("/api/user/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, expiry, provider, usedCount: used ? parseInt(used,10): undefined, itineraries: legacyIts, checklists: legacyChecks }) });
+      localStorage.setItem("rutawaynow-migrated-v2","1");
+      // refresh lists after migrate
+      fetch("/api/user/checklists").then(r=>r.json()).then(setChecks).catch(()=>{});
+      fetch("/api/user/itineraries").then(r=>r.json()).then(setIts);
+    };
+    doMigrate();
   }, [status, lang]);
 
   const handlePdf = async (it: It) => {
