@@ -96,10 +96,7 @@ export default function AccountPage() {
           <h2 className="font-semibold">{t("account.currentPlan")}</h2>
           {planStatus ? (
             planStatus.hasActivePlan ? (
-              <>
-                <p className="text-sm mt-2">{planStatus.message}</p>
-                <p className="text-xs text-slate-500 mt-1">{t("account.ofAvailable", { remaining: planStatus.remaining, max: planStatus.max, name: planStatus.planName })}</p>
-              </>
+              <p className="text-sm mt-2">{planStatus.message}</p>
             ) : (
               <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
                 <p className="text-sm font-medium text-amber-900">{planStatus.message}</p>
