@@ -72,6 +72,14 @@ export function CheckoutSuccessContent() {
       if (!existingUsage) {
         localStorage.setItem(existingUsageKey, '0');
       }
+
+      // Also persist to user account DB if logged in (so clearing storage doesn't lose plan)
+      fetch("/api/user/migrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ plan, expiry: expiry.toISOString(), provider: 'stripe', usedCount: 0 }),
+      }).catch(()=>{});
     }
   }, [plan, loading]);
 
