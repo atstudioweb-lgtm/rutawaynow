@@ -151,7 +151,7 @@ export default function AccountPage() {
               </div>
             )) : (
               <div className="rounded-xl border border-dashed p-6 text-center">
-                <p className="text-sm font-medium text-slate-900">{t("checklist.title")} — {t("account.noItineraries").toLowerCase()}</p>
+                <p className="text-sm font-medium text-slate-900">{t("checklist.title")}</p>
                 <p className="text-xs text-slate-500 mt-1">{t("account.noItinerariesHint")}</p>
               </div>
             )}
