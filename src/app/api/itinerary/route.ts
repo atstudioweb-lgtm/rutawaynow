@@ -357,15 +357,15 @@ export async function POST(request: Request) {
               "X-Title": "RutawayNow",
             },
             body: JSON.stringify({
-              model: process.env.OPENROUTER_MODEL || "openrouter/free",
+              model: process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001:free",
               messages: [
                 { role: "system", content: SYSTEM_PROMPTS[lang] },
                 { role: "user", content: userPrompt },
               ],
               temperature: 0.7,
-              max_tokens: 4096,
+              max_tokens: 8192,
               response_format: { type: "json_object" } as never,
-              provider: { allow_fallbacks: true } as never,
+              provider: { allow_fallbacks: true, require_parameters: true } as never,
             }),
           });
           if (fallbackRes.ok) {
