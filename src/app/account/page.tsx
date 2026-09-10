@@ -23,7 +23,17 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
+    fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{
+      // If DB says no plan but localStorage has a plan (immediate post-purchase before webhook), fallback to localStorage
+      if (!d.status?.hasActivePlan) {
+        try {
+          const { getPlanStatus } = require("@/lib/plan-utils");
+          const local = getPlanStatus(lang);
+          if (local.hasActivePlan) { setSubs([]); setPlanStatus(local as never); return; }
+        } catch {}
+      }
+      setSubs(d.subscriptions||[]); setPlanStatus(d.status);
+    });
     fetch("/api/user/itineraries").then(r=>r.json()).then(setIts);
     fetch("/api/user/checklists").then(r=>r.json()).then(setChecks).catch(()=>{});
     const migrated = localStorage.getItem("rutawaynow-migrated");
