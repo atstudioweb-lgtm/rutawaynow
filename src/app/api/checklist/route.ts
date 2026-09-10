@@ -133,6 +133,7 @@ export async function POST(request: Request) {
     const response = await fetchWithRetry(FREEAI_API_URL, {
       method: "POST",
       headers: {
+        ...(process.env.FREEAI_API_KEY ? { Authorization: `Bearer ${process.env.FREEAI_API_KEY}` } : {}),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -156,6 +157,40 @@ export async function POST(request: Request) {
       console.error(
         `[checklist] Free.ai responded ${response.status}: ${errorText}`,
       );
+      const isDailyLimit = response.status === 429 && /daily limit/i.test(errorText);
+      if (isDailyLimit && process.env.OPENROUTER_API_KEY) {
+        console.log("[checklist] Daily limit reached, trying OpenRouter fallback...");
+        try {
+          const fallbackRes = await fetchWithRetry("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://rutawaynow.vercel.app",
+              "X-Title": "RutawayNow",
+            },
+            body: JSON.stringify({
+              model: process.env.OPENROUTER_MODEL || "openrouter/free",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPTS[lang] },
+                { role: "user", content: userPrompt },
+              ],
+              temperature: 0.5,
+            }),
+          });
+          if (fallbackRes.ok) {
+            const fbData = (await fallbackRes.json()) as { choices?: { message?: { content?: string } }[] };
+            const fbContent = fbData.choices?.[0]?.message?.content;
+            if (fbContent) {
+              try {
+                const fbChecklist = JSON.parse(extractJson(fbContent)) as Checklist;
+                return NextResponse.json(fbChecklist);
+              } catch { console.error("[checklist] Fallback JSON parse failed"); }
+            }
+          }
+          console.error("[checklist] OpenRouter fallback also failed", await fallbackRes.text().catch(()=> ""));
+        } catch (e) { console.error("[checklist] Fallback error", e); }
+      }
       if (response.status === 429 || response.errorType === "rate_limit") {
         return NextResponse.json(
           { error: errors.rateLimitExceeded ?? errors.apiFailed },
