@@ -114,7 +114,7 @@ export default function AccountPage() {
           {subs.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
-              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{s.planId} — {s.status === 'active' ? t("account.active") : s.status} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
+              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{t(`pricing.${s.planId}.name`)} — {s.status === 'active' ? t("account.active") : s.status} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
             </div>
           )}
         </section>
@@ -148,14 +148,18 @@ export default function AccountPage() {
             {checks.length > 0 && <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">{t("account.newItinerary")}</Link>}
           </div>
           <div className="mt-4 grid gap-3">
-            {checks.length > 0 ? checks.map(ch=> (
+            {checks.length > 0 ? checks.map(ch=> {
+              const raw = ch.items as Record<string, unknown>;
+              const destino = (raw.destino as string) || ch.itinerary?.destination || t("checklist.title");
+              const periodo = (raw.periodo as string) || "";
+              return (
               <div key={ch.id} className="rounded-xl border p-4 flex items-center justify-between">
-                <div><div className="font-medium">{ch.itinerary?.destination || t("checklist.title")} — {new Date(ch.createdAt).toLocaleDateString()}</div><div className="text-xs text-slate-500">{ch.lang === 'en' ? 'English' : 'Português'} • {new Date(ch.createdAt).toLocaleString()}</div></div>
+                <div><div className="font-medium">{destino}{periodo ? ` — ${periodo}` : ""}</div><div className="text-xs text-slate-500">{new Date(ch.createdAt).toLocaleString()} • {ch.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
                   <button onClick={()=>handleChecklistPdf(ch)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</button>
                 </div>
               </div>
-            )) : (
+            );}) : (
               <div className="rounded-xl border border-dashed p-6 text-center">
                 <p className="text-sm font-medium text-slate-900">{t("checklist.title")}</p>
                 <p className="text-xs text-slate-500 mt-1">{t("account.noItinerariesHint")}</p>
