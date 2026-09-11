@@ -41,24 +41,46 @@ export function Dashboard() {
   const { t, lang, messages } = useI18n();
   const { data: session, status } = useSession();
 
+  const [tripResult, setTripResult] = useState<TripResult | null>(null);
+  const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
+    null,
+  );
+  const [checklist, setChecklist] = useState<Checklist | null>(null);
+  const [checklistLang, setChecklistLang] = useState<"pt" | "en" | null>(null);
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
+  const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
+  const [checklistError, setChecklistError] = useState<string | null>(null);
+  const [checkedChecklistItems, setCheckedChecklistItems] = useState<
+    Set<string>
+  >(new Set());
+  const [currentChecklistId, setCurrentChecklistId] = useState<string | null>(null);
+  const [roteiroDownloaded, setRoteiroDownloaded] = useState(false);
+  const [favoritesByTrip, setFavoritesByTrip] = useState<
+    Record<string, number[]>
+  >(loadFavorites);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [generatedLang, setGeneratedLang] = useState<"pt" | "en" | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
+
   // Load last generated itinerary from DB if logged in and no tripResult yet (shows last itinerary instead of Florianópolis default)
   useEffect(() => {
     if (status !== "authenticated" || tripResult) return;
-    // Check for selected itinerary from /account "View" button first
     try {
       const raw = localStorage.getItem("rutawaynow:selectedItinerary");
       if (raw) {
         const parsed = JSON.parse(raw) as It;
-        // Convert DB itinerary to TripResult for display
         const roteiro = parsed.roteiro as Roteiro;
         const result: TripResult = {
           roteiro,
           destination: parsed.destination,
           month: parsed.month,
           days: parsed.days,
-          travelers: (parsed as unknown as { adults?: number; teens?: number; children?: number }).adults ? ((parsed as unknown as { adults: number; teens: number; children: number }).adults + ((parsed as unknown as { teens: number }).teens || 0) + ((parsed as unknown as { children: number }).children || 0)) : 1,
+          travelers: 1,
           budget: (parsed.budget as never) || "medio",
-          styles: Array.isArray((parsed as unknown as { styles?: unknown }).styles) ? ((parsed as unknown as { styles: unknown[] }).styles as string[]) : [],
+          styles: [],
           input: { destination: parsed.destination, days: parsed.days, month: parsed.month, budget: (parsed.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (parsed.lang as never) || "pt" },
           styleIds: [],
           monthIndex: -1,
@@ -90,29 +112,6 @@ export function Dashboard() {
       }
     }).catch(()=>{});
   }, [status, tripResult]);
-  const [tripResult, setTripResult] = useState<TripResult | null>(null);
-  const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
-  const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
-    null,
-  );
-  const [checklist, setChecklist] = useState<Checklist | null>(null);
-  const [checklistLang, setChecklistLang] = useState<"pt" | "en" | null>(null);
-  const [checklistOpen, setChecklistOpen] = useState(false);
-  const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
-  const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
-  const [checklistError, setChecklistError] = useState<string | null>(null);
-  const [checkedChecklistItems, setCheckedChecklistItems] = useState<
-    Set<string>
-  >(new Set());
-  const [currentChecklistId, setCurrentChecklistId] = useState<string | null>(null);
-  const [roteiroDownloaded, setRoteiroDownloaded] = useState(false);
-  const [favoritesByTrip, setFavoritesByTrip] = useState<
-    Record<string, number[]>
-  >(loadFavorites);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [generatedLang, setGeneratedLang] = useState<"pt" | "en" | null>(null);
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const activeTrip = useMemo(
     () => (tripResult ? mapTripResult(tripResult, lang, messages) : getSampleTrip(lang)),
