@@ -264,6 +264,7 @@ export const pt = {
     generatePdf: "Gerar PDF",
     choosePlan: "Escolha um plano para começar a gerar roteiros personalizados.",
     viewPlans: "Ver planos",
+    viewItinerary: "Ver roteiro",
     loading: "Carregando...",
     loadingPlan: "Carregando plano...",
     userArea: "Área do usuário",

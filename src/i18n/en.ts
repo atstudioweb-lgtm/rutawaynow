@@ -266,6 +266,7 @@ export const en: Messages = {
     generatePdf: "Generate PDF",
     choosePlan: "Choose a plan to start generating personalized itineraries.",
     viewPlans: "View plans",
+    viewItinerary: "View itinerary",
     loading: "Loading...",
     loadingPlan: "Loading plan...",
     userArea: "User area",

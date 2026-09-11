@@ -143,10 +143,11 @@ export default function AccountPage() {
           </div>
           <div className="mt-4 grid gap-3">
             {its.length > 0 ? its.map(it=> (
-              <div key={it.id} className="rounded-xl border p-4 flex items-center justify-between">
+              <div key={it.id} className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div><div className="font-medium">{it.destination} — {it.days} {t("account.days")} • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
-                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</a> : <button onClick={()=>handlePdf(it)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.generatePdf")}</button>}
+                  <button onClick={()=>{ localStorage.setItem("rutawaynow:selectedItinerary", JSON.stringify(it)); router.push("/"); }} className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t("account.viewItinerary") || "View"}</button>
+                  {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</a> : <button onClick={()=>handlePdf(it)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</button>}
                 </div>
               </div>
             )) : (

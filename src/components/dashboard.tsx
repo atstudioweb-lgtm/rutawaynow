@@ -18,6 +18,7 @@ import type {
   Roteiro,
   TripResult,
 } from "@/types/itinerary";
+type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 
 const FAVORITES_KEY = "rutawaynow-favorites";
 
@@ -39,6 +40,56 @@ function loadFavorites(): Record<string, number[]> {
 export function Dashboard() {
   const { t, lang, messages } = useI18n();
   const { data: session, status } = useSession();
+
+  // Load last generated itinerary from DB if logged in and no tripResult yet (shows last itinerary instead of Florianópolis default)
+  useEffect(() => {
+    if (status !== "authenticated" || tripResult) return;
+    // Check for selected itinerary from /account "View" button first
+    try {
+      const raw = localStorage.getItem("rutawaynow:selectedItinerary");
+      if (raw) {
+        const parsed = JSON.parse(raw) as It;
+        // Convert DB itinerary to TripResult for display
+        const roteiro = parsed.roteiro as Roteiro;
+        const result: TripResult = {
+          roteiro,
+          destination: parsed.destination,
+          month: parsed.month,
+          days: parsed.days,
+          travelers: (parsed as unknown as { adults?: number; teens?: number; children?: number }).adults ? ((parsed as unknown as { adults: number; teens: number; children: number }).adults + ((parsed as unknown as { teens: number }).teens || 0) + ((parsed as unknown as { children: number }).children || 0)) : 1,
+          budget: (parsed.budget as never) || "medio",
+          styles: Array.isArray((parsed as unknown as { styles?: unknown }).styles) ? ((parsed as unknown as { styles: unknown[] }).styles as string[]) : [],
+          input: { destination: parsed.destination, days: parsed.days, month: parsed.month, budget: (parsed.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (parsed.lang as never) || "pt" },
+          styleIds: [],
+          monthIndex: -1,
+        };
+        setTripResult(result);
+        setGeneratedLang((parsed.lang as "pt"|"en") || "pt");
+        localStorage.removeItem("rutawaynow:selectedItinerary");
+        return;
+      }
+    } catch {}
+    fetch("/api/user/itineraries").then(r=>r.json()).then((list: It[])=>{
+      if (Array.isArray(list) && list.length > 0) {
+        const last = list[0];
+        const roteiro = last.roteiro as Roteiro;
+        const result: TripResult = {
+          roteiro,
+          destination: last.destination,
+          month: last.month,
+          days: last.days,
+          travelers: 1,
+          budget: (last.budget as never) || "medio",
+          styles: [],
+          input: { destination: last.destination, days: last.days, month: last.month, budget: (last.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (last.lang as never) || "pt" },
+          styleIds: [],
+          monthIndex: -1,
+        };
+        setTripResult(result);
+        setGeneratedLang((last.lang as "pt"|"en") || "pt");
+      }
+    }).catch(()=>{});
+  }, [status, tripResult]);
   const [tripResult, setTripResult] = useState<TripResult | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
