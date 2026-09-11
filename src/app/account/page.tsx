@@ -69,22 +69,14 @@ export default function AccountPage() {
   };
 
   const handleChecklistPdf = async (check: Check) => {
-    const relatedIt = its.find(i => i.id === check.itineraryId);
-    if (relatedIt) { handlePdf(relatedIt); return; }
-    // Generate PDF from checklist items (client-side)
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-    doc.setFontSize(16); doc.text(String(t("checklist.title")), 14, 20);
-    doc.setFontSize(10); doc.text(new Date(check.createdAt).toLocaleString(), 14, 28);
-    let y = 36;
-    const items = (check.items as { categorias?: Array<{ categoria: string; itens: string[] }> })?.categorias || [];
-    for (const cat of items) {
-      doc.setFontSize(12); doc.text(cat.categoria, 14, y); y+=7;
-      doc.setFontSize(9);
-      for (const it of cat.itens) { if (y>280) { doc.addPage(); y=14; } doc.text(`- ${it}`, 16, y); y+=5; }
-      y+=3;
-    }
-    doc.save(`checklist-${check.id.slice(0,8)}.pdf`);
+    const { generateChecklistPdf } = await import("@/lib/pdf");
+    const raw = check.items as Record<string, unknown>;
+    const checklist = {
+      destino: (raw.destino as string) || check.itinerary?.destination || "Checklist",
+      periodo: (raw.periodo as string) || new Date(check.createdAt).toLocaleDateString(),
+      categorias: (raw.categorias as unknown) as never || [],
+    } as import("@/types/itinerary").Checklist;
+    generateChecklistPdf(checklist, undefined, undefined, undefined);
   };
 
   if (status === "loading") return <div className="p-8">{t("account.loading")}</div>;
