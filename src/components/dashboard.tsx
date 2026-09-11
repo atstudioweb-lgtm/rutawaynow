@@ -53,6 +53,7 @@ export function Dashboard() {
   const [checkedChecklistItems, setCheckedChecklistItems] = useState<
     Set<string>
   >(new Set());
+  const [currentChecklistId, setCurrentChecklistId] = useState<string | null>(null);
   const [roteiroDownloaded, setRoteiroDownloaded] = useState(false);
   const [favoritesByTrip, setFavoritesByTrip] = useState<
     Record<string, number[]>
@@ -201,6 +202,17 @@ export function Dashboard() {
     });
   };
 
+  // Persist checked state to DB when it changes (so /account PDF keeps markings)
+  useEffect(() => {
+    if (!currentChecklistId || !checklist) return;
+    const byCat: number[][] = checklist.categorias.map((cat) => {
+      const arr: number[] = [];
+      cat.itens.forEach((item, idx) => { if (checkedChecklistItems.has(`${cat.categoria}::${item}`)) arr.push(idx); });
+      return arr;
+    });
+    fetch("/api/user/checklists", { method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ checklistId: currentChecklistId, checked: byCat }) }).catch(()=>{});
+  }, [checkedChecklistItems, currentChecklistId, checklist]);
+
   const handleGenerateChecklist = async () => {
     if (isGeneratingChecklist) return;
 
@@ -265,7 +277,7 @@ export function Dashboard() {
       setChecklistOpen(true);
       // Persist checklist to user account if logged in (for /account history and PDF re-download) - include checked state (initially empty)
       const checkedByCat: number[][] = data.categorias.map(()=> []);
-      fetch("/api/user/checklists", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ items: data, lang, checked: checkedByCat }) }).then(async r=>{ if(!r.ok) { const t=await r.text().catch(()=> ""); console.warn("Checklist save failed", r.status, t); } else console.log("Checklist saved"); }).catch(e=>console.warn("Checklist save error", e));
+      fetch("/api/user/checklists", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ items: data, lang, checked: checkedByCat }) }).then(async r=>{ if(!r.ok) { const t=await r.text().catch(()=> ""); console.warn("Checklist save failed", r.status, t); } else { const j=await r.json().catch(()=>null); if(j?.id) setCurrentChecklistId(j.id); console.log("Checklist saved", j?.id); } }).catch(e=>console.warn("Checklist save error", e));
     } catch (err) {
       setChecklistError(
         err instanceof Error ? err.message : t("errors.generateChecklist"),
