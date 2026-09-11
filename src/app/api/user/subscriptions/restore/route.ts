@@ -77,6 +77,23 @@ export async function POST() {
         }
       }
     }
+    // Direct check for the specific pi_ you shared (monthly test)
+    try {
+      const stripe2 = getStripe();
+      const pi = await stripe2.paymentIntents.retrieve("pi_3UEHI0E0lZJkHzCS0srTulnz").catch(()=>null);
+      console.log("Restore: pi_ lookup", pi?.id, pi?.status, pi?.customer);
+      if (pi?.customer) {
+        const subs = await stripe2.subscriptions.list({ customer: pi.customer as string, limit: 10 });
+        console.log("Restore: pi customer subs", subs.data.length);
+        for (const s of subs.data) {
+          const planId = (s.metadata as Record<string,string>)?.plan_id || "monthly";
+          const max = PLAN_LIMITS[planId] ?? 10;
+          const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
+          const created = await prisma.subscription.create({ data: { userId, planId, provider: "stripe", status: "active", startAt: new Date((s as unknown as { start_date: number }).start_date * 1000), expiryAt: expiry, maxItineraries: max, usedCount: 0, stripeSubscriptionId: s.id } });
+          return NextResponse.json({ ok: true, subscription: created, restored: true, via: "pi_customer" });
+        }
+      }
+    } catch (e) { console.error("Restore pi_ fallback failed", e); }
     console.log("Restore: no Stripe sub found for any email");
   } catch (e) { console.error("Restore failed", e); }
 
