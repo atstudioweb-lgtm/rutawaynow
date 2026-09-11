@@ -9,10 +9,21 @@ const PLAN_NAMES: Record<string, Record<string,string>> = {
 export async function getServerPlanStatus(userId: string, lang: string = 'pt') {
   const l = lang === 'en' ? 'en' : 'pt';
   const now = new Date();
-  const sub = await prisma.subscription.findFirst({
+  let sub = await prisma.subscription.findFirst({
     where: { userId, status: 'active', expiryAt: { gt: now } },
     orderBy: { createdAt: 'desc' },
   });
+  // Fallback for old subscriptions created with mock user_123 before Google auth fix
+  if (!sub && userId !== 'user_123') {
+    const mockSub = await prisma.subscription.findFirst({
+      where: { userId: 'user_123', status: 'active', expiryAt: { gt: now } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (mockSub) {
+      // Migrate to real user
+      sub = await prisma.subscription.update({ where: { id: mockSub.id }, data: { userId } });
+    }
+  }
   if (!sub) return { hasActivePlan:false, planType:null, planName:'', remaining:0, max:0, expiry:null, canGenerate:false, message: l==='en' ? 'No active plan. Purchase a plan to generate itineraries.' : 'Nenhum plano ativo. Adquira um plano para gerar roteiros.' };
   
   const max = PLAN_LIMITS[sub.planId as keyof typeof PLAN_LIMITS] || 0;
