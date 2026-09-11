@@ -43,14 +43,17 @@ export async function POST() {
           }
           console.log("Restore: creating sub for plan", planId, s.id);
           const max = PLAN_LIMITS[planId] ?? 0;
-          const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
+          const sAny = s as unknown as { current_period_end?: number; start_date?: number; current_period_start?: number };
+          let expiry = sAny.current_period_end ? new Date(sAny.current_period_end * 1000) : new Date();
+          if (isNaN(expiry.getTime())) { expiry = new Date(); if (planId === 'monthly') expiry.setMonth(expiry.getMonth()+1); else if (planId === 'fortnightly') expiry.setDate(expiry.getDate()+14); else expiry.setFullYear(expiry.getFullYear()+10); }
+          const startAt = sAny.start_date ? new Date(sAny.start_date * 1000) : sAny.current_period_start ? new Date(sAny.current_period_start * 1000) : new Date();
           const created = await prisma.subscription.create({
             data: {
               userId,
               planId,
               provider: "stripe",
               status: "active",
-              startAt: new Date((s as unknown as { start_date: number }).start_date * 1000),
+              startAt: isNaN(startAt.getTime()) ? new Date() : startAt,
               expiryAt: expiry,
               maxItineraries: max,
               usedCount: 0,
