@@ -114,7 +114,18 @@ export default function AccountPage() {
           {subs.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
-              {subs.map(s=> <div key={s.id} className="flex justify-between rounded-xl border p-3 text-sm"><span>{t(`pricing.${s.planId}.name`)} — {s.status === 'active' ? t("account.active") : s.status} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()}</span><span>{s.usedCount}/{s.maxItineraries}</span></div>)}
+              {subs.map(s=> (
+                <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
+                  <span>{t(`pricing.${s.planId}.name`)} — {s.status === 'active' ? t("account.active") : s.status} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()} • {s.usedCount}/{s.maxItineraries}</span>
+                  {s.status === 'active' && s.provider === 'stripe' && s.planId !== 'single' && (
+                    <button onClick={async ()=>{
+                      if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
+                      const r = await fetch("/api/user/subscriptions/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscriptionId: s.id }) });
+                      if(r.ok) { fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); }); } else { const j=await r.json().catch(()=>({})); alert(j.error || "Failed to cancel"); }
+                    }} className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">{t("account.cancelSubscription") || "Cancel"}</button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </section>

@@ -270,6 +270,8 @@ export const pt = {
     loginHint: "Faça login para ver seus planos e roteiros.",
     signInGoogle: "Entrar com Google",
     ofAvailable: "{remaining} de {max} roteiros disponíveis • Plano {name}",
+    cancelSubscription: "Cancelar assinatura",
+    cancelConfirm: "Tem certeza que deseja cancelar esta assinatura? Você perderá o acesso ao final do período atual.",
     days: "dias",
   },
 };

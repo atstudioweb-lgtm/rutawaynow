@@ -272,6 +272,8 @@ export const en: Messages = {
     loginHint: "Sign in to view your plans and itineraries.",
     signInGoogle: "Sign in with Google",
     ofAvailable: "{remaining} of {max} itineraries available • {name} plan",
+    cancelSubscription: "Cancel subscription",
+    cancelConfirm: "Are you sure you want to cancel this subscription? You will lose access at the end of the current period.",
     days: "days",
   },
 };
