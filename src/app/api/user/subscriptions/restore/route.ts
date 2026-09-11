@@ -34,14 +34,14 @@ export async function POST() {
         }
         if (!planId) continue;
         const max = PLAN_LIMITS[planId] ?? 0;
-        const expiry = new Date(s.current_period_end * 1000);
+        const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
         const created = await prisma.subscription.create({
           data: {
             userId,
             planId,
             provider: "stripe",
             status: "active",
-            startAt: new Date(s.start_date * 1000),
+            startAt: new Date((s as unknown as { start_date: number }).start_date * 1000),
             expiryAt: expiry,
             maxItineraries: max,
             usedCount: 0,
