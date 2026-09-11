@@ -18,23 +18,30 @@ export async function POST() {
   // Try to find Stripe subscription by email (covers purchases before DB, even with mock user_123)
   try {
     const stripe = getStripe();
+    console.log("Restore: trying emails", email);
     const emailsToTry = [email, "user@example.com"];
     for (const tryEmail of emailsToTry) {
+      console.log("Restore: checking customers for", tryEmail);
       const customers = await stripe.customers.list({ email: tryEmail, limit: 3 });
+      console.log("Restore: customers found", customers.data.length, "for", tryEmail);
       for (const cust of customers.data) {
-        const subs = await stripe.subscriptions.list({ customer: cust.id, status: "active", limit: 5 });
+        console.log("Restore: checking subs for customer", cust.id, cust.email);
+        const subs = await stripe.subscriptions.list({ customer: cust.id, limit: 10 });
+        console.log("Restore: subs found", subs.data.length, "statuses", subs.data.map(s=>s.status));
         for (const s of subs.data) {
+          if (s.status !== "active" && s.status !== "trialing") continue;
           // Try to infer plan from Stripe price or metadata
           const price = s.items.data[0]?.price;
           const amount = price?.unit_amount;
           // Map amount to plan: single 199/990, fortnightly 399/1990, monthly 699/3490 (cents)
-          let planId: string | null = (s.metadata as Record<string,string>)?.plan_id || null;
+          let planId: string | null = (s.metadata as Record<string,string>)?.plan_id || (s.items.data[0]?.price?.product as unknown as { metadata?: Record<string,string> })?.metadata?.plan_id || null;
           if (!planId) {
             if (amount === 199 || amount === 990) planId = "single";
             else if (amount === 399 || amount === 1990) planId = "fortnightly";
             else if (amount === 699 || amount === 3490) planId = "monthly";
+            else { console.log("Restore: skipping sub", s.id, "amount", amount, "no planId"); continue; }
           }
-          if (!planId) continue;
+          console.log("Restore: creating sub for plan", planId, s.id);
           const max = PLAN_LIMITS[planId] ?? 0;
           const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
           const created = await prisma.subscription.create({
@@ -55,10 +62,11 @@ export async function POST() {
           return NextResponse.json({ ok: true, subscription: created, restored: true });
         }
         // Also check checkout sessions for one-time single plan
-        const sessions = await stripe.checkout.sessions.list({ customer: cust.id, limit: 5 });
+        const sessions = await stripe.checkout.sessions.list({ customer: cust.id, limit: 10 });
+        console.log("Restore: sessions found", sessions.data.length);
         for (const sess of sessions.data) {
-          if (sess.payment_status === "paid" && sess.metadata?.plan_id) {
-            const planId = sess.metadata.plan_id;
+          if (sess.payment_status === "paid" && (sess.metadata?.plan_id || (sess as unknown as { metadata?: Record<string,string> })?.metadata?.plan_id)) {
+            const planId = (sess.metadata as Record<string,string>).plan_id;
             const max = PLAN_LIMITS[planId] ?? 1;
             const expiry = new Date(); expiry.setFullYear(expiry.getFullYear() + 10);
             const created = await prisma.subscription.create({
@@ -69,6 +77,7 @@ export async function POST() {
         }
       }
     }
+    console.log("Restore: no Stripe sub found for any email");
   } catch (e) { console.error("Restore failed", e); }
 
   // Fallback: check mock user_123 subscriptions and migrate
