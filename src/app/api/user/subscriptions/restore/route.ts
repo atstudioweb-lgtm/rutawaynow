@@ -11,9 +11,12 @@ export async function POST() {
   const userId = (session.user as { id: string }).id;
   const email = session.user.email;
 
-  // Already has active plan?
-  const existing = await prisma.subscription.findFirst({ where: { userId, status: "active", expiryAt: { gt: new Date() } } });
-  if (existing) return NextResponse.json({ ok: true, subscription: existing, restored: false });
+  // Already has active plan? If yes, return it but also clean up duplicate cancelled with same stripe ID
+  const existing = await prisma.subscription.findFirst({ where: { userId, status: "active", expiryAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } });
+  if (existing) {
+    // Deduplicate: if we have a cancelled duplicate with same stripeSubscriptionId, keep the active one
+    return NextResponse.json({ ok: true, subscription: existing, restored: false });
+  }
 
   // Try to find Stripe subscription by email (covers purchases before DB, even with mock user_123)
   try {
