@@ -121,7 +121,13 @@ export default function AccountPage() {
                     <button onClick={async ()=>{
                       if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
                       const r = await fetch("/api/user/subscriptions/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscriptionId: s.id }) });
-                      if(r.ok) { fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); }); } else { const j=await r.json().catch(()=>({})); alert(j.error || "Failed to cancel"); }
+                      const j = await r.json().catch(()=> ({}));
+                      if(r.ok) {
+                        const remaining = s.maxItineraries - s.usedCount;
+                        const msg = t("account.cancelSuccess", { remaining, max: s.maxItineraries, date: new Date(s.expiryAt).toLocaleDateString() });
+                        alert(msg !== "account.cancelSuccess" ? msg : `Subscription cancelled. You can still use ${remaining} itineraries until ${new Date(s.expiryAt).toLocaleDateString()}.`);
+                        fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
+                      } else { alert(j.error || "Failed to cancel"); }
                     }} className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">{t("account.cancelSubscription") || "Cancel"}</button>
                   )}
                 </div>

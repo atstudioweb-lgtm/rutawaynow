@@ -272,6 +272,7 @@ export const pt = {
     ofAvailable: "{remaining} de {max} roteiros disponíveis • Plano {name}",
     cancelSubscription: "Cancelar assinatura",
     cancelConfirm: "Tem certeza que deseja cancelar esta assinatura? Você perderá o acesso ao final do período atual.",
+    cancelSuccess: "Assinatura cancelada. Você ainda pode usar {remaining} de {max} roteiros até {date}.",
     days: "dias",
   },
 };

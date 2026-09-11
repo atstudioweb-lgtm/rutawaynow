@@ -274,6 +274,7 @@ export const en: Messages = {
     ofAvailable: "{remaining} of {max} itineraries available • {name} plan",
     cancelSubscription: "Cancel subscription",
     cancelConfirm: "Are you sure you want to cancel this subscription? You will lose access at the end of the current period.",
+    cancelSuccess: "Subscription cancelled. You can still use {remaining} of {max} itineraries until {date}.",
     days: "days",
   },
 };

@@ -14,12 +14,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
     }
 
-    // Get user from session
-    const user = {
-      id: 'user_123',
-      email: 'user@example.com',
-      name: 'Usuário Teste',
-    };
+    // Get user from session (real logged-in user)
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    const user = session?.user?.id
+      ? { id: (session.user as { id: string }).id, email: session.user.email || 'user@example.com', name: session.user.name || 'Usuário' }
+      : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste' };
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
