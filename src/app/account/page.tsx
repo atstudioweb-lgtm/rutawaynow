@@ -10,7 +10,7 @@ import type { Roteiro, Checklist } from "@/types/itinerary";
 
 type Sub = { id: string; planId: string; status: string; expiryAt: string; usedCount: number; maxItineraries: number };
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
-type Check = { id: string; itineraryId?: string; items: unknown; lang: string; createdAt: string; itinerary?: { destination: string } };
+type Check = { id: string; itineraryId?: string; items: unknown; checked?: number[][]; lang: string; createdAt: string; itinerary?: { destination: string } };
 
 export default function AccountPage() {
   const { data: session, status } = useSession();
@@ -76,7 +76,7 @@ export default function AccountPage() {
       periodo: (raw.periodo as string) || new Date(check.createdAt).toLocaleDateString(),
       categorias: (raw.categorias as unknown) as never || [],
     } as import("@/types/itinerary").Checklist;
-    generateChecklistPdf(checklist, undefined, undefined, undefined);
+    generateChecklistPdf(checklist, check.checked as never, undefined, undefined);
   };
 
   if (status === "loading") return <div className="p-8">{t("account.loading")}</div>;

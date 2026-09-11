@@ -263,8 +263,9 @@ export function Dashboard() {
       setChecklist(data);
       setChecklistLang(lang);
       setChecklistOpen(true);
-      // Persist checklist to user account if logged in (for /account history and PDF re-download)
-      fetch("/api/user/checklists", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ items: data, lang }) }).then(async r=>{ if(!r.ok) { const t=await r.text().catch(()=> ""); console.warn("Checklist save failed", r.status, t); } else console.log("Checklist saved"); }).catch(e=>console.warn("Checklist save error", e));
+      // Persist checklist to user account if logged in (for /account history and PDF re-download) - include checked state (initially empty)
+      const checkedByCat: number[][] = data.categorias.map(()=> []);
+      fetch("/api/user/checklists", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ items: data, lang, checked: checkedByCat }) }).then(async r=>{ if(!r.ok) { const t=await r.text().catch(()=> ""); console.warn("Checklist save failed", r.status, t); } else console.log("Checklist saved"); }).catch(e=>console.warn("Checklist save error", e));
     } catch (err) {
       setChecklistError(
         err instanceof Error ? err.message : t("errors.generateChecklist"),

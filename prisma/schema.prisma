@@ -112,6 +112,7 @@ model Checklist {
   userId      String
   itineraryId String?
   items       Json
+  checked     Json? // number[][] checked indices per category
   lang        String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

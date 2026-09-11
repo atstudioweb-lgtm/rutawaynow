@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
-  const { items, lang, itineraryId } = body as { items: unknown; lang: string; itineraryId?: string };
-  const created = await prisma.checklist.create({ data: { userId: (session.user as { id: string }).id, itineraryId: itineraryId || null, items: items as object, lang: lang || "pt" } });
+  const { items, lang, itineraryId, checked } = body as { items: unknown; lang: string; itineraryId?: string; checked?: unknown };
+  const created = await prisma.checklist.create({ data: { userId: (session.user as { id: string }).id, itineraryId: itineraryId || null, items: items as object, checked: checked as object | undefined, lang: lang || "pt" } });
   return NextResponse.json(created);
 }
