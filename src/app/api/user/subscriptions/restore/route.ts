@@ -18,51 +18,54 @@ export async function POST() {
   // Try to find Stripe subscription by email (covers purchases before DB, even with mock user_123)
   try {
     const stripe = getStripe();
-    const customers = await stripe.customers.list({ email, limit: 3 });
-    for (const cust of customers.data) {
-      const subs = await stripe.subscriptions.list({ customer: cust.id, status: "active", limit: 5 });
-      for (const s of subs.data) {
-        // Try to infer plan from Stripe price or metadata
-        const price = s.items.data[0]?.price;
-        const amount = price?.unit_amount;
-        // Map amount to plan: single 199/990, fortnightly 399/1990, monthly 699/3490 (cents)
-        let planId: string | null = (s.metadata as Record<string,string>)?.plan_id || null;
-        if (!planId) {
-          if (amount === 199 || amount === 990) planId = "single";
-          else if (amount === 399 || amount === 1990) planId = "fortnightly";
-          else if (amount === 699 || amount === 3490) planId = "monthly";
-        }
-        if (!planId) continue;
-        const max = PLAN_LIMITS[planId] ?? 0;
-        const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
-        const created = await prisma.subscription.create({
-          data: {
-            userId,
-            planId,
-            provider: "stripe",
-            status: "active",
-            startAt: new Date((s as unknown as { start_date: number }).start_date * 1000),
-            expiryAt: expiry,
-            maxItineraries: max,
-            usedCount: 0,
-            periodKey: planId === "monthly" ? new Date().toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString(),
-            stripeSubscriptionId: s.id,
-            stripeSessionId: null,
-          },
-        });
-        return NextResponse.json({ ok: true, subscription: created, restored: true });
-      }
-      // Also check checkout sessions for one-time single plan
-      const sessions = await stripe.checkout.sessions.list({ customer: cust.id, limit: 5 });
-      for (const sess of sessions.data) {
-        if (sess.payment_status === "paid" && sess.metadata?.plan_id) {
-          const planId = sess.metadata.plan_id;
-          const max = PLAN_LIMITS[planId] ?? 1;
-          const expiry = new Date(); expiry.setFullYear(expiry.getFullYear() + 10);
+    const emailsToTry = [email, "user@example.com"];
+    for (const tryEmail of emailsToTry) {
+      const customers = await stripe.customers.list({ email: tryEmail, limit: 3 });
+      for (const cust of customers.data) {
+        const subs = await stripe.subscriptions.list({ customer: cust.id, status: "active", limit: 5 });
+        for (const s of subs.data) {
+          // Try to infer plan from Stripe price or metadata
+          const price = s.items.data[0]?.price;
+          const amount = price?.unit_amount;
+          // Map amount to plan: single 199/990, fortnightly 399/1990, monthly 699/3490 (cents)
+          let planId: string | null = (s.metadata as Record<string,string>)?.plan_id || null;
+          if (!planId) {
+            if (amount === 199 || amount === 990) planId = "single";
+            else if (amount === 399 || amount === 1990) planId = "fortnightly";
+            else if (amount === 699 || amount === 3490) planId = "monthly";
+          }
+          if (!planId) continue;
+          const max = PLAN_LIMITS[planId] ?? 0;
+          const expiry = new Date((s as unknown as { current_period_end: number }).current_period_end * 1000);
           const created = await prisma.subscription.create({
-            data: { userId, planId, provider: "stripe", status: "active", startAt: new Date(sess.created * 1000), expiryAt: expiry, maxItineraries: max, usedCount: 0, stripeSessionId: sess.id },
+            data: {
+              userId,
+              planId,
+              provider: "stripe",
+              status: "active",
+              startAt: new Date((s as unknown as { start_date: number }).start_date * 1000),
+              expiryAt: expiry,
+              maxItineraries: max,
+              usedCount: 0,
+              periodKey: planId === "monthly" ? new Date().toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString(),
+              stripeSubscriptionId: s.id,
+              stripeSessionId: null,
+            },
           });
           return NextResponse.json({ ok: true, subscription: created, restored: true });
+        }
+        // Also check checkout sessions for one-time single plan
+        const sessions = await stripe.checkout.sessions.list({ customer: cust.id, limit: 5 });
+        for (const sess of sessions.data) {
+          if (sess.payment_status === "paid" && sess.metadata?.plan_id) {
+            const planId = sess.metadata.plan_id;
+            const max = PLAN_LIMITS[planId] ?? 1;
+            const expiry = new Date(); expiry.setFullYear(expiry.getFullYear() + 10);
+            const created = await prisma.subscription.create({
+              data: { userId, planId, provider: "stripe", status: "active", startAt: new Date(sess.created * 1000), expiryAt: expiry, maxItineraries: max, usedCount: 0, stripeSessionId: sess.id },
+            });
+            return NextResponse.json({ ok: true, subscription: created, restored: true });
+          }
         }
       }
     }
