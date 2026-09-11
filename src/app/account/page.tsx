@@ -8,7 +8,7 @@ import { mapTripResult } from "@/data/trip";
 import { useI18n } from "@/i18n/provider";
 import type { Roteiro, Checklist } from "@/types/itinerary";
 
-type Sub = { id: string; planId: string; status: string; expiryAt: string; usedCount: number; maxItineraries: number };
+type Sub = { id: string; planId: string; status: string; expiryAt: string; usedCount: number; maxItineraries: number; provider: string };
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 type Check = { id: string; itineraryId?: string; items: unknown; checked?: number[][]; lang: string; createdAt: string; itinerary?: { destination: string } };
 
