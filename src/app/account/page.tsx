@@ -117,7 +117,7 @@ export default function AccountPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
               {subs.filter(s=> s.status === 'active').map(s=> (
                 <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
-                  <span>{t(`pricing.${s.planId}.name`)} — {t("account.active")} — {t("account.expires")} {new Date(s.expiryAt).toLocaleDateString()} • {s.usedCount}/{s.maxItineraries}</span>
+                  <span>{t(`pricing.${s.planId}.name`)} — {t("account.active")} — {s.planId === 'single' ? (lang === 'en' ? 'Lifetime' : 'Vitalício') : `${t("account.expires")} ${new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR')}`} • {s.usedCount}/{s.maxItineraries}</span>
                   {s.status === 'active' && s.provider === 'stripe' && s.planId !== 'single' && (
                     <button onClick={async ()=>{
                       if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
@@ -125,8 +125,9 @@ export default function AccountPage() {
                       const j = await r.json().catch(()=> ({}));
                       if(r.ok) {
                         const remaining = s.maxItineraries - s.usedCount;
-                        const msg = t("account.cancelSuccess", { remaining, max: s.maxItineraries, date: new Date(s.expiryAt).toLocaleDateString() });
-                        alert(msg !== "account.cancelSuccess" ? msg : `Subscription cancelled. You can still use ${remaining} itineraries until ${new Date(s.expiryAt).toLocaleDateString()}.`);
+                        const dateStr = new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR');
+                        const msg = t("account.cancelSuccess", { remaining, max: s.maxItineraries, date: dateStr });
+                        alert(msg !== "account.cancelSuccess" ? msg : `Subscription cancelled. You can still use ${remaining} itineraries until ${dateStr}.`);
                         fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
                       } else { alert(j.error || "Failed to cancel"); }
                     }} className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">{t("account.cancelSubscription") || "Cancel"}</button>
