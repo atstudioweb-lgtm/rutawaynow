@@ -146,8 +146,23 @@ export function OnboardingModal({
         : step === 3
           ? budget !== null
           : true;
+  const [serverCanGenerate, setServerCanGenerate] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setServerCanGenerate(!!data.status?.canGenerate);
+        }
+      } catch { if (!cancelled) setServerCanGenerate(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [lang]);
   const planStatus = getPlanStatus(lang);
-  const canGenerate = styles.length > 0 && planStatus.canGenerate;
+  const effectiveCanGenerate = serverCanGenerate !== null ? serverCanGenerate : planStatus.canGenerate;
+  const canGenerate = styles.length > 0 && effectiveCanGenerate;
   const totalTravelers = adults + teens + children;
 
   const daysLabel = days === 1 ? t("onboarding.dayOne") : t("onboarding.dayOther");
