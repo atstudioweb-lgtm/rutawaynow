@@ -108,14 +108,8 @@ export default function AccountPage() {
               <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
                 <p className="text-sm font-medium text-amber-900">{planStatus.message}</p>
                 <p className="text-xs text-amber-700 mt-1">{t("account.choosePlan")}</p>
-                <div className="mt-3 flex gap-2">
-                  <Link href="/pricing" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.viewPlans")}</Link>
-                  <button onClick={async ()=>{
-                    const r = await fetch("/api/user/subscriptions/restore", { method: "POST" });
-                    const j = await r.json().catch(()=>({}));
-                    if (r.ok) { alert("Plano restaurado!"); fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); }); } else alert(j.error || "Nenhuma compra encontrada para restaurar");
-                  }} className="inline-flex rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50">Restaurar compras</button>
-                </div>
+                <Link href="/pricing" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.viewPlans")}</Link>
+              </div>
               </div>
             )
           ) : <p className="text-sm text-slate-500">{t("account.loadingPlan")}</p>}
