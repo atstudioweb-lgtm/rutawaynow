@@ -117,7 +117,7 @@ export default function AccountPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
               {subs.filter(s=> s.status === 'active').map(s=> (
                 <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
-                  <span>{t(`pricing.${s.planId}.name`)} — {t("account.active")} — {s.planId === 'single' ? (lang === 'en' ? 'Lifetime' : 'Vitalício') : `${t("account.expires")} ${new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR')}`} • {s.usedCount}/{s.maxItineraries}</span>
+                  <span>{t(`pricing.${s.planId}.name`)} — {t("account.active")} — {s.usedCount}/{s.maxItineraries}{s.planId !== 'single' ? ` • ${t("account.expires")} ${new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR')}` : ""}</span>
                   {s.status === 'active' && s.provider === 'stripe' && s.planId !== 'single' && (
                     <button onClick={async ()=>{
                       if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
