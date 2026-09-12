@@ -269,37 +269,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errors.stylesRequired }, { status: 400 });
   }
 
-  // Validate user's plan - server-side if logged in, fallback to localStorage if DB has no plan yet (webhook delay)
+  // Validate user's plan - always from DB (no localStorage fallback)
   const { auth } = await import('@/lib/auth');
   const session = await auth();
-  let serverSubscriptionId: string | null = null;
-  let isServerPlan = false;
-  if (session?.user?.id) {
-    const { getServerPlanStatus } = await import('@/lib/server-plan');
-    const serverStatus = await getServerPlanStatus((session.user as { id: string }).id, lang);
-    if (serverStatus.canGenerate) {
-      isServerPlan = true;
-      serverSubscriptionId = (serverStatus as unknown as { subscriptionId?: string }).subscriptionId ?? null;
-    } else {
-      // Fallback to localStorage validation for immediate post-purchase (webhook may not have created DB record yet)
-      const plan = body?.plan as string | undefined;
-      const planExpiry = body?.planExpiry as string | undefined;
-      const planValidation = validatePlan(plan || null, planExpiry || null);
-      if (!planValidation.valid) {
-        return NextResponse.json({ error: serverStatus.message || planValidation.message || 'Plano inválido ou sem créditos.' }, { status: 403 });
-      }
-    }
-  } else {
-    const plan = body?.plan as string | undefined;
-    const planExpiry = body?.planExpiry as string | undefined;
-    const planValidation = validatePlan(plan || null, planExpiry || null);
-    if (!planValidation.valid) {
-      return NextResponse.json(
-        { error: planValidation.message || 'Plano inválido ou sem créditos.' },
-        { status: 403 },
-      );
-    }
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: lang === 'en' ? 'Please sign in to generate itineraries.' : 'Faça login para gerar roteiros.' }, { status: 401 });
   }
+  let serverSubscriptionId: string | null = null;
+  const { getServerPlanStatus } = await import('@/lib/server-plan');
+  const serverStatus = await getServerPlanStatus((session.user as { id: string }).id, lang);
+  if (!serverStatus.canGenerate) {
+    return NextResponse.json({ error: serverStatus.message || 'Plano inválido ou sem créditos.' }, { status: 403 });
+  }
+  serverSubscriptionId = (serverStatus as unknown as { subscriptionId?: string }).subscriptionId ?? null;
 
   const userPrompt = USER_PROMPTS[lang]({
     destination,

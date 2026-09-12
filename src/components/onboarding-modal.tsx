@@ -147,6 +147,7 @@ export function OnboardingModal({
           ? budget !== null
           : true;
   const [serverCanGenerate, setServerCanGenerate] = useState<boolean | null>(null);
+  const [serverMessage, setServerMessage] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -154,15 +155,20 @@ export function OnboardingModal({
         const res = await fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (!cancelled) setServerCanGenerate(!!data.status?.canGenerate);
+          if (!cancelled) {
+            setServerCanGenerate(!!data.status?.canGenerate);
+            setServerMessage(data.status?.message || null);
+          }
+        } else if (!cancelled) {
+          setServerCanGenerate(false);
         }
-      } catch { if (!cancelled) setServerCanGenerate(null); }
+      } catch { if (!cancelled) { setServerCanGenerate(false); setServerMessage(null); } }
     })();
     return () => { cancelled = true; };
   }, [lang]);
-  const planStatus = getPlanStatus(lang);
-  const effectiveCanGenerate = serverCanGenerate !== null ? serverCanGenerate : planStatus.canGenerate;
-  const canGenerate = styles.length > 0 && effectiveCanGenerate;
+  // Always use DB when logged in (no localStorage fallback)
+  const canGenerate = styles.length > 0 && (serverCanGenerate ?? false);
+  const planStatus = { canGenerate: serverCanGenerate ?? false, message: serverMessage } as unknown as ReturnType<typeof getPlanStatus>;
   const totalTravelers = adults + teens + children;
 
   const daysLabel = days === 1 ? t("onboarding.dayOne") : t("onboarding.dayOther");
@@ -217,17 +223,16 @@ export function OnboardingModal({
   const handleGenerate = async () => {
     if (!canGenerate || generating) return;
 
-    // Check plan status before generating - try server first if logged in, fallback to localStorage
-    let planStatus = getPlanStatus(lang);
+    // Check plan status before generating - always from DB (no localStorage)
+    let planStatus: ReturnType<typeof getPlanStatus>;
     try {
-      const res = await fetch("/api/user/subscriptions");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status?.hasActivePlan) planStatus = { hasActivePlan: data.status.hasActivePlan, planType: data.status.planType, planName: data.status.planName, remainingItineraries: data.status.remaining, maxItineraries: data.status.max, expiryDate: data.status.expiry ? new Date(data.status.expiry) : null, canGenerate: data.status.canGenerate, message: data.status.message } as never;
-        // if server has no plan, keep localStorage planStatus (allows immediate post-purchase before webhook)
-        if (!data.status?.hasActivePlan) planStatus = getPlanStatus(lang);
-      }
-    } catch {}
+      const res = await fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      planStatus = { hasActivePlan: !!data.status?.hasActivePlan, planType: data.status?.planType ?? null, planName: data.status?.planName ?? "", remainingItineraries: data.status?.remaining ?? 0, maxItineraries: data.status?.max ?? 0, expiryDate: data.status?.expiry ? new Date(data.status.expiry) : null, canGenerate: !!data.status?.canGenerate, message: data.status?.message || t("errors.generateRoteiro") } as never;
+    } catch {
+      planStatus = { hasActivePlan: false, planType: null, planName: "", remainingItineraries: 0, maxItineraries: 0, expiryDate: null, canGenerate: false, message: t("errors.noActivePlan") } as never;
+    }
     if (!planStatus.canGenerate) {
       setError(planStatus.message || t("errors.generateRoteiro"));
       return;
@@ -238,19 +243,10 @@ export function OnboardingModal({
 
     try {
       const input = buildInput();
-      const plan = localStorage.getItem('rutawaynow-plan');
-      const planExpiry = localStorage.getItem('rutawaynow-plan-expiry');
-
       const response = await fetch("/api/itinerary", {
         method: "POST",
-        headers: {
-          "Authorization": "Bearer ${process.env.FREEAI_API_KEY}",
-          "Content-Type": "application/json"},
-        body: JSON.stringify({
-          ...input,
-          plan: localStorage.getItem('rutawaynow-plan'),
-          planExpiry: localStorage.getItem('rutawaynow-plan-expiry'),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
       });
 
       const data = (await response.json()) as Roteiro & { error?: string };

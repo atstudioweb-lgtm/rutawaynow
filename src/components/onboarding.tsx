@@ -27,29 +27,25 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
       router.push("/login");
       return;
     }
-    // Try server DB first (for cross-device), fallback to localStorage
-    let planStatus = getPlanStatus(lang);
+    // Always use DB for logged-in users (no localStorage fallback)
+    let planStatus: ReturnType<typeof getPlanStatus>;
     try {
       const res = await fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status?.hasActivePlan !== undefined) {
-          // Use server status if DB has data, otherwise keep localStorage fallback
-          if (data.status.hasActivePlan || data.subscriptions?.length > 0) {
-            planStatus = {
-              hasActivePlan: data.status.hasActivePlan,
-              planType: data.status.planType,
-              planName: data.status.planName,
-              remainingItineraries: data.status.remaining,
-              maxItineraries: data.status.max,
-              expiryDate: data.status.expiry ? new Date(data.status.expiry) : null,
-              canGenerate: data.status.canGenerate,
-              message: data.status.message,
-            } as never;
-          }
-        }
-      }
-    } catch {}
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      planStatus = {
+        hasActivePlan: !!data.status?.hasActivePlan,
+        planType: data.status?.planType ?? null,
+        planName: data.status?.planName ?? "",
+        remainingItineraries: data.status?.remaining ?? 0,
+        maxItineraries: data.status?.max ?? 0,
+        expiryDate: data.status?.expiry ? new Date(data.status.expiry) : null,
+        canGenerate: !!data.status?.canGenerate,
+        message: data.status?.message || t("errors.noActivePlan"),
+      } as never;
+    } catch {
+      planStatus = { hasActivePlan: false, planType: null, planName: "", remainingItineraries: 0, maxItineraries: 0, expiryDate: null, canGenerate: false, message: t("errors.noActivePlan") } as never;
+    }
     if (planStatus.hasActivePlan && planStatus.canGenerate) {
       setPlanError(null);
       setOpen(true);
