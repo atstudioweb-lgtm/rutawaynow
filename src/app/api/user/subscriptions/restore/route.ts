@@ -107,6 +107,27 @@ export async function POST() {
     console.log("Restore: no Stripe sub found for any email");
   } catch (e) { console.error("Restore failed", e); }
 
+  // Direct restore for your known Stripe subscription (provided details)
+  try {
+    const stripe = getStripe();
+    const directSub = await stripe.subscriptions.retrieve("sub_1UEHI2E0lZJkHzCSsybhn5Sx").catch(()=>null);
+    if (directSub) {
+      const sAny = directSub as unknown as { current_period_end?: number; start_date?: number };
+      let expiry = sAny.current_period_end ? new Date(sAny.current_period_end * 1000) : new Date();
+      if (isNaN(expiry.getTime())) { expiry = new Date(); expiry.setMonth(expiry.getMonth()+1); }
+      const startAt = sAny.start_date ? new Date(sAny.start_date * 1000) : new Date();
+      const existingDirect = await prisma.subscription.findFirst({ where: { stripeSubscriptionId: directSub.id } });
+      if (existingDirect) {
+        const migrated = await prisma.subscription.update({ where: { id: existingDirect.id }, data: { userId, status: "active" } });
+        return NextResponse.json({ ok: true, subscription: migrated, restored: true, via: "directSub" });
+      }
+      const createdDirect = await prisma.subscription.create({
+        data: { userId, planId: "monthly", provider: "stripe", status: "active", startAt: isNaN(startAt.getTime()) ? new Date() : startAt, expiryAt: expiry, maxItineraries: 10, usedCount: 8, periodKey: new Date().toISOString().slice(0,7), stripeSubscriptionId: directSub.id, stripeSessionId: null },
+      });
+      return NextResponse.json({ ok: true, subscription: createdDirect, restored: true, via: "directSub" });
+    }
+  } catch (e) { console.error("Direct sub restore failed", e); }
+
   // Fallback: check mock user_123 subscriptions and migrate
   const mockSub = await prisma.subscription.findFirst({ where: { userId: "user_123", status: "active", expiryAt: { gt: new Date() } }, orderBy: { createdAt: "desc" } });
   if (mockSub) {
