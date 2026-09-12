@@ -110,7 +110,6 @@ export default function AccountPage() {
                 <p className="text-xs text-amber-700 mt-1">{t("account.choosePlan")}</p>
                 <Link href="/pricing" className="mt-3 inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.viewPlans")}</Link>
               </div>
-              </div>
             )
           ) : <p className="text-sm text-slate-500">{t("account.loadingPlan")}</p>}
           {subs.filter(s=> s.status === 'active').length > 0 && (
