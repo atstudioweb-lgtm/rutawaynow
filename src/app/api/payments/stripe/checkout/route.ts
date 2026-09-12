@@ -17,9 +17,11 @@ export async function POST(req: NextRequest) {
     // Get user from session (real logged-in user)
     const { auth } = await import('@/lib/auth');
     const session = await auth();
+    console.log('Stripe checkout session:', session?.user?.email, session?.user?.id);
     const user = session?.user?.id
       ? { id: (session.user as { id: string }).id, email: session.user.email || 'user@example.com', name: session.user.name || 'Usuário' }
       : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste' };
+    console.log('Stripe checkout user:', user.email, user.id);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
