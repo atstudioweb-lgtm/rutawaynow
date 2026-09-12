@@ -21,10 +21,8 @@ export default function AccountPage() {
   const [checks, setChecks] = useState<Check[]>([]);
   const [planStatus, setPlanStatus] = useState<{ hasActivePlan?: boolean; remaining: number; max: number; planName: string; message: string } | null>(null);
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{
-      // If DB says no plan but localStorage has a plan (immediate post-purchase before webhook), fallback to localStorage
+  const refresh = () => {
+    fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" }).then(r=>r.json()).then(d=>{
       if (!d.status?.hasActivePlan) {
         try {
           const { getPlanStatus } = require("@/lib/plan-utils");
@@ -34,8 +32,14 @@ export default function AccountPage() {
       }
       setSubs(d.subscriptions||[]); setPlanStatus(d.status);
     });
-    fetch("/api/user/itineraries").then(r=>r.json()).then(setIts);
-    fetch("/api/user/checklists").then(r=>r.json()).then(setChecks).catch(()=>{});
+    fetch("/api/user/itineraries", { cache: "no-store" }).then(r=>r.json()).then(setIts);
+    fetch("/api/user/checklists", { cache: "no-store" }).then(r=>r.json()).then(setChecks).catch(()=>{});
+  };
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    refresh();
+    const onFocus = () => refresh();
+    window.addEventListener("focus", onFocus);
     const doMigrate = async () => {
       const migrated = localStorage.getItem("rutawaynow-migrated-v2");
       if (migrated) return;
@@ -45,21 +49,18 @@ export default function AccountPage() {
       const used = localStorage.getItem("rutawaynow-single-used");
       const legacyIts: unknown[] = [];
       try { const raw = localStorage.getItem("rutawaynow:lastItinerary"); if (raw) legacyIts.push(JSON.parse(raw)); } catch {}
-      // Collect checklists from localStorage if any (try common keys)
       const legacyChecks: unknown[] = [];
       for (const k of Object.keys(localStorage)) {
         if (k.startsWith("rutawaynow-checklist") || k.includes("checklist")) {
           try { const v = localStorage.getItem(k); if (v) legacyChecks.push(JSON.parse(v)); } catch {}
         }
       }
-      // Also try to get checklist from current session if stored in memory (will be empty on first load, but future checklists are saved via dashboard POST)
       await fetch("/api/user/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, expiry, provider, usedCount: used ? parseInt(used,10): undefined, itineraries: legacyIts, checklists: legacyChecks }) });
       localStorage.setItem("rutawaynow-migrated-v2","1");
-      // refresh lists after migrate
-      fetch("/api/user/checklists").then(r=>r.json()).then(setChecks).catch(()=>{});
-      fetch("/api/user/itineraries").then(r=>r.json()).then(setIts);
+      refresh();
     };
     doMigrate();
+    return () => window.removeEventListener("focus", onFocus);
   }, [status, lang]);
 
   const handlePdf = async (it: It) => {
