@@ -16,15 +16,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
     }
 
-    // Get user from session (you'll need to implement auth)
-    // For now, using mock user data
-    const user = {
-      id: 'user_123',
-      email: 'user@example.com',
-      name: 'Usuário Teste',
-      phone: '+55 11 99999-9999',
-      document: '123.456.789-00',
-    };
+    // Get user from session (real Google user if logged in)
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    console.log('Checkout session:', session?.user?.email, session?.user?.id);
+    const user = session?.user?.id
+      ? { id: (session.user as { id: string }).id, email: session.user.email || 'user@example.com', name: session.user.name || 'Usuário', phone: '+55 11 99999-9999', document: '123.456.789-00' }
+      : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste', phone: '+55 11 99999-9999', document: '123.456.789-00' };
+    console.log('Checkout user:', user.email, user.id);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -38,13 +37,15 @@ export async function POST(req: NextRequest) {
     const intervalText = plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '';
 
     if (provider === 'stripe') {
+      const successUrl = `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}&session_id={CHECKOUT_SESSION_ID}`;
+      console.log('SUCCESS URL SENT TO STRIPE:', successUrl, 'baseUrl:', baseUrl);
       const result = await createStripeCheckoutSession({
         plan,
         currency: currency as 'BRL' | 'USD' | 'EUR',
         userId: user.id,
         userEmail: user.email,
         userName: user.name,
-        successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        successUrl,
         cancelUrl: cancelUrl || `${baseUrl}/pricing`,
         provider: 'stripe',
         lang,
