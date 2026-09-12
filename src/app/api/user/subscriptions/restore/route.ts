@@ -31,8 +31,12 @@ export async function POST() {
         console.log("Restore: checking subs for customer", cust.id, cust.email);
         const subs = await stripe.subscriptions.list({ customer: cust.id, limit: 10 });
         console.log("Restore: subs found", subs.data.length, "statuses", subs.data.map(s=>s.status));
-        for (const s of subs.data) {
-          if (s.status !== "active" && s.status !== "trialing") continue;
+        // Also include recently cancelled (still within period, e.g., you cancelled but still have 2/10)
+        const allSubs = subs.data.length ? subs.data : (await stripe.subscriptions.list({ customer: cust.id, limit: 10, status: "all" as never })).data;
+        for (const s of allSubs) {
+          // Accept active, trialing, past_due, or cancelled but still within current_period_end
+          const isUsable = s.status === "active" || s.status === "trialing" || s.status === "past_due" || (s.status === "canceled" && (s as unknown as { current_period_end?: number }).current_period_end && (s as unknown as { current_period_end: number }).current_period_end * 1000 > Date.now());
+          if (!isUsable) { console.log("Restore: skipping sub", s.id, "status", s.status); continue; }
           // Try to infer plan from Stripe price or metadata
           const price = s.items.data[0]?.price;
           const amount = price?.unit_amount;
