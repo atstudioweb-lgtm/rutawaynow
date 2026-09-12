@@ -21,13 +21,35 @@ export function Onboarding({ onGenerated }: OnboardingProps) {
   const [planError, setPlanError] = useState<string | null>(null);
 
   const handleClick = async () => {
-    // Verification on Planejar viagem click as requested
+    // Verification on Planejar viagem click - check DB for logged-in user so both devices share same plan state
     if (status === "loading") return;
     if (!session?.user) {
       router.push("/login");
       return;
     }
-    const planStatus = getPlanStatus(lang);
+    // Try server DB first (for cross-device), fallback to localStorage
+    let planStatus = getPlanStatus(lang);
+    try {
+      const res = await fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status?.hasActivePlan !== undefined) {
+          // Use server status if DB has data, otherwise keep localStorage fallback
+          if (data.status.hasActivePlan || data.subscriptions?.length > 0) {
+            planStatus = {
+              hasActivePlan: data.status.hasActivePlan,
+              planType: data.status.planType,
+              planName: data.status.planName,
+              remainingItineraries: data.status.remaining,
+              maxItineraries: data.status.max,
+              expiryDate: data.status.expiry ? new Date(data.status.expiry) : null,
+              canGenerate: data.status.canGenerate,
+              message: data.status.message,
+            } as never;
+          }
+        }
+      }
+    } catch {}
     if (planStatus.hasActivePlan && planStatus.canGenerate) {
       setPlanError(null);
       setOpen(true);
