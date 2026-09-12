@@ -22,16 +22,7 @@ export default function AccountPage() {
   const [planStatus, setPlanStatus] = useState<{ hasActivePlan?: boolean; remaining: number; max: number; planName: string; message: string } | null>(null);
 
   const refresh = () => {
-    fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" }).then(r=>r.json()).then(d=>{
-      if (!d.status?.hasActivePlan) {
-        try {
-          const { getPlanStatus } = require("@/lib/plan-utils");
-          const local = getPlanStatus(lang);
-          if (local.hasActivePlan) { setSubs([]); setPlanStatus(local as never); return; }
-        } catch {}
-      }
-      setSubs(d.subscriptions||[]); setPlanStatus(d.status);
-    });
+    fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" }).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
     fetch("/api/user/itineraries", { cache: "no-store" }).then(r=>r.json()).then(setIts);
     fetch("/api/user/checklists", { cache: "no-store" }).then(r=>r.json()).then(setChecks).catch(()=>{});
   };
@@ -40,26 +31,6 @@ export default function AccountPage() {
     refresh();
     const onFocus = () => refresh();
     window.addEventListener("focus", onFocus);
-    const doMigrate = async () => {
-      const migrated = localStorage.getItem("rutawaynow-migrated-v2");
-      if (migrated) return;
-      const plan = localStorage.getItem("rutawaynow-plan");
-      const expiry = localStorage.getItem("rutawaynow-plan-expiry");
-      const provider = localStorage.getItem("rutawaynow-plan-provider");
-      const used = localStorage.getItem("rutawaynow-single-used");
-      const legacyIts: unknown[] = [];
-      try { const raw = localStorage.getItem("rutawaynow:lastItinerary"); if (raw) legacyIts.push(JSON.parse(raw)); } catch {}
-      const legacyChecks: unknown[] = [];
-      for (const k of Object.keys(localStorage)) {
-        if (k.startsWith("rutawaynow-checklist") || k.includes("checklist")) {
-          try { const v = localStorage.getItem(k); if (v) legacyChecks.push(JSON.parse(v)); } catch {}
-        }
-      }
-      await fetch("/api/user/migrate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan, expiry, provider, usedCount: used ? parseInt(used,10): undefined, itineraries: legacyIts, checklists: legacyChecks }) });
-      localStorage.setItem("rutawaynow-migrated-v2","1");
-      refresh();
-    };
-    doMigrate();
     return () => window.removeEventListener("focus", onFocus);
   }, [status, lang]);
 
@@ -148,7 +119,7 @@ export default function AccountPage() {
               <div key={it.id} className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div><div className="font-medium">{it.destination} — {it.days} {t("account.days")} • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
-                  <button onClick={()=>{ localStorage.setItem("rutawaynow:selectedItinerary", JSON.stringify(it)); router.push("/"); }} className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t("account.viewItinerary") || "View"}</button>
+                  <button onClick={()=> router.push(`/?view=${it.id}`)} className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t("account.viewItinerary") || "View"}</button>
                   {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</a> : <button onClick={()=>handlePdf(it)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</button>}
                 </div>
               </div>

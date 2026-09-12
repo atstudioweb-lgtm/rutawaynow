@@ -65,32 +65,55 @@ export function Dashboard() {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
-  // Load last generated itinerary from DB if logged in and no tripResult yet (shows last itinerary instead of Florianópolis default)
+  // Load last generated itinerary from DB if logged in and no tripResult yet (shows last itinerary instead of Florianópolis default) - uses ?view=itineraryId from /account
   useEffect(() => {
     if (status !== "authenticated" || tripResult) return;
-    try {
-      const raw = localStorage.getItem("rutawaynow:selectedItinerary");
-      if (raw) {
-        const parsed = JSON.parse(raw) as It;
-        const roteiro = parsed.roteiro as Roteiro;
+    const params = new URLSearchParams(window.location.search);
+    const viewId = params.get("view");
+    if (viewId) {
+      fetch(`/api/user/itineraries/${viewId}`).then(r=>r.json()).then((it: It)=>{
+        const roteiro = it.roteiro as Roteiro;
         const result: TripResult = {
           roteiro,
-          destination: parsed.destination,
-          month: parsed.month,
-          days: parsed.days,
+          destination: it.destination,
+          month: it.month,
+          days: it.days,
           travelers: 1,
-          budget: (parsed.budget as never) || "medio",
+          budget: (it.budget as never) || "medio",
           styles: [],
-          input: { destination: parsed.destination, days: parsed.days, month: parsed.month, budget: (parsed.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (parsed.lang as never) || "pt" },
+          input: { destination: it.destination, days: it.days, month: it.month, budget: (it.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (it.lang as never) || "pt" },
           styleIds: [],
           monthIndex: -1,
         };
         setTripResult(result);
-        setGeneratedLang((parsed.lang as "pt"|"en") || "pt");
-        localStorage.removeItem("rutawaynow:selectedItinerary");
-        return;
-      }
-    } catch {}
+        setGeneratedLang((it.lang as "pt"|"en") || "pt");
+        // Clean URL
+        window.history.replaceState({}, "", window.location.pathname);
+      }).catch(()=>{
+        // Fallback to last itinerary
+        fetch("/api/user/itineraries").then(r=>r.json()).then((list: It[])=>{
+          if (Array.isArray(list) && list.length > 0) {
+            const last = list[0];
+            const roteiro = last.roteiro as Roteiro;
+            const result: TripResult = {
+              roteiro,
+              destination: last.destination,
+              month: last.month,
+              days: last.days,
+              travelers: 1,
+              budget: (last.budget as never) || "medio",
+              styles: [],
+              input: { destination: last.destination, days: last.days, month: last.month, budget: (last.budget as never) || "medio", adults: 1, teens: 0, children: 0, styles: [], lang: (last.lang as never) || "pt" },
+              styleIds: [],
+              monthIndex: -1,
+            };
+            setTripResult(result);
+            setGeneratedLang((last.lang as "pt"|"en") || "pt");
+          }
+        }).catch(()=>{});
+      });
+      return;
+    }
     fetch("/api/user/itineraries").then(r=>r.json()).then((list: It[])=>{
       if (Array.isArray(list) && list.length > 0) {
         const last = list[0];

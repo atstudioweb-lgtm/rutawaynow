@@ -53,27 +53,7 @@ export function CheckoutSuccessContent() {
       } else {
         expiry.setFullYear(expiry.getFullYear() + 10);
       }
-      localStorage.setItem('rutawaynow-plan', plan);
-      localStorage.setItem('rutawaynow-plan-provider', 'stripe');
-      localStorage.setItem('rutawaynow-plan-expiry', expiry.toISOString());
-      
-      // Only initialize usage counters if they don't already exist
-      const periodKey = plan === 'monthly' 
-        ? new Date().toISOString().slice(0, 7)
-        : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
-      
-      const existingSingleUsed = localStorage.getItem('rutawaynow-single-used');
-      if (!existingSingleUsed) {
-        localStorage.setItem('rutawaynow-single-used', '0');
-      }
-      
-      const existingUsageKey = `rutawaynow-usage-${plan}-${periodKey}`;
-      const existingUsage = localStorage.getItem(existingUsageKey);
-      if (!existingUsage) {
-        localStorage.setItem(existingUsageKey, '0');
-      }
-
-      // Also persist to user account DB if logged in (so clearing storage doesn't lose plan)
+      // Persist to user account DB (sole source of truth - no localStorage)
       fetch("/api/user/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,9 +84,7 @@ export function CheckoutSuccessContent() {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           {loading
             ? 'Processing payment...'
-            : typeof window !== 'undefined' && localStorage.getItem('rutawaynow-plan-provider') === 'mercadopago' 
-              ? 'Pagamento aprovado!' 
-              : 'Payment successful!'}
+            : 'Payment successful!'}
         </h1>
         <p className="text-slate-600 mt-2">
           {loading ? 'Retrieving plan details...' : 'Redirecting to dashboard...'}
