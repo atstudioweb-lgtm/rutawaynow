@@ -266,6 +266,36 @@ export function Dashboard() {
   const handleGenerateChecklist = async () => {
     if (isGeneratingChecklist) return;
 
+    // Check DB for existing checklist for this trip (cross-device) before generating new one
+    try {
+      const res = await fetch("/api/user/checklists", { cache: "no-store" });
+      if (res.ok) {
+        const list = await res.json() as Array<{ id: string; items: { destino?: string; periodo?: string; categorias: unknown[] }; lang: string }>;
+        const dest = tripResult?.destination ?? activeTrip.title;
+        const monthForCheck = tripResult && tripResult.monthIndex >=0 ? (messages.onboarding.months as string[])[tripResult.monthIndex] : tripResult?.month ?? activeTrip.dates;
+        const existing = list.find(c => {
+          const d = (c.items as { destino?: string }).destino;
+          const p = (c.items as { periodo?: string }).periodo;
+          return d === dest && p === monthForCheck && c.lang === lang;
+        });
+        if (existing) {
+          const chk = existing.items as Checklist;
+          setChecklist(chk);
+          setChecklistLang(existing.lang as "pt"|"en");
+          setCurrentChecklistId(existing.id);
+          // restore checked state if any
+          const chkData = existing as unknown as { checked?: number[][] };
+          if (chkData.checked) {
+            const s = new Set<string>();
+            chk.categorias.forEach((cat, ci)=> { const arr = chkData.checked?.[ci] || []; arr.forEach(idx=> { const it = cat.itens[idx]; if (it) s.add(`${cat.categoria}::${it}`); }); });
+            setCheckedChecklistItems(s);
+          }
+          setChecklistOpen(true);
+          return;
+        }
+      }
+    } catch {}
+
     if (checklist && checklistLang && checklistLang !== lang) {
       void handleTranslateChecklist();
       return;
