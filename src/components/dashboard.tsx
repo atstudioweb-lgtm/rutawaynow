@@ -245,6 +245,8 @@ export function Dashboard() {
     });
   };
 
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+
   const handleDaySelect = (id: number) => {
     setSelectedDayId(id);
     setSelectedActivityId(null);
@@ -256,6 +258,10 @@ export function Dashboard() {
     );
     if (day) setSelectedDayId(day.id);
     setSelectedActivityId(id);
+    // Auto-scroll to map on mobile when View on map clicked
+    if (window.innerWidth < 1024 && mapContainerRef.current) {
+      mapContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const destinationLabel = tripResult?.destination ?? "Florianópolis · SC";
@@ -454,8 +460,8 @@ export function Dashboard() {
   }, [lang]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl flex-1 px-4 pb-10 sm:px-6 lg:px-8">
-      <header className="flex items-center justify-between gap-4 py-6">
+    <div className="mx-auto w-full max-w-7xl flex-1 px-2 pb-10 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-3 py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
             <Icon name="plane" className="h-5 w-5" />
@@ -467,7 +473,7 @@ export function Dashboard() {
             <p className="text-xs text-slate-500">{t("app.tagline")}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Onboarding onGenerated={handleGenerated} />
           <LanguageSwitcher />
           {status === "authenticated" ? (
@@ -506,7 +512,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -605,7 +611,7 @@ export function Dashboard() {
               onClearFavorites={handleClearFavorites}
             />
           </div>
-          <div className="order-1 lg:sticky lg:top-6 lg:order-2 lg:col-span-2">
+          <div ref={mapContainerRef} className="order-1 lg:sticky lg:top-6 lg:order-2 lg:col-span-2">
             <TripMap
               trip={activeTrip}
               destination={destinationLabel}
