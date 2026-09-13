@@ -16,19 +16,29 @@ export async function POST(req: NextRequest) {
   if (plan && expiry) {
     const max = PLAN_LIMITS[plan] ?? 0;
     const expiryAt = new Date(expiry);
-    const existing = await prisma.subscription.findFirst({ where: { userId, status: "active" } });
-    if (!existing) {
+    const now = new Date();
+    const periodKey = plan === "monthly" ? now.toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
+    // Allow a second plan (e.g. Single used up, then Fortnightly). Only skip if same plan already active.
+    const samePlanActive = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: "active",
+        planId: plan,
+        expiryAt: { gt: now },
+      },
+    });
+    if (!samePlanActive) {
       await prisma.subscription.create({
         data: {
           userId,
           planId: plan,
           provider: provider || "stripe",
           status: "active",
-          startAt: new Date(),
+          startAt: now,
           expiryAt,
           maxItineraries: max,
           usedCount: typeof usedCount === "number" ? usedCount : 0,
-          periodKey: plan === "monthly" ? new Date().toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString(),
+          periodKey: plan === "single" ? null : periodKey,
         },
       });
     }

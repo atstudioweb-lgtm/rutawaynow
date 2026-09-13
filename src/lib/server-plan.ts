@@ -9,31 +9,53 @@ const PLAN_NAMES: Record<string, Record<string,string>> = {
 export async function getServerPlanStatus(userId: string, lang: string = 'pt') {
   const l = lang === 'en' ? 'en' : 'pt';
   const now = new Date();
-  let sub = await prisma.subscription.findFirst({
+  let subs = await prisma.subscription.findMany({
     where: { userId, status: 'active', expiryAt: { gt: now } },
     orderBy: { createdAt: 'desc' },
   });
   // Fallback for old subscriptions created with mock user_123 before Google auth fix
-  if (!sub && userId !== 'user_123') {
+  if (subs.length === 0 && userId !== 'user_123') {
     const mockSub = await prisma.subscription.findFirst({
       where: { userId: 'user_123', status: 'active', expiryAt: { gt: now } },
       orderBy: { createdAt: 'desc' },
     });
     if (mockSub) {
       // Migrate to real user
-      sub = await prisma.subscription.update({ where: { id: mockSub.id }, data: { userId } });
+      const migrated = await prisma.subscription.update({ where: { id: mockSub.id }, data: { userId } });
+      subs = [migrated];
+    }
+  }
+  // Pick the best subscription: first with remaining > 0, otherwise most recent (to show limit message)
+  let sub: typeof subs[number] | null = null;
+  let subRemaining = 0;
+  let subEffectiveUsed = 0;
+  let subPeriodKey = '';
+  for (const candidate of subs) {
+    const candMax = PLAN_LIMITS[candidate.planId as keyof typeof PLAN_LIMITS] || 0;
+    const candPeriodKey = candidate.planId === 'monthly' ? now.toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
+    const candEffective = candidate.planId === 'single' ? candidate.usedCount : (candidate.periodKey !== candPeriodKey ? 0 : candidate.usedCount);
+    const candRemaining = Math.max(0, candMax - candEffective);
+    if (candRemaining > 0) {
+      sub = candidate;
+      subRemaining = candRemaining;
+      subEffectiveUsed = candEffective;
+      subPeriodKey = candPeriodKey;
+      break;
+    }
+    // keep most recent as fallback to show exhausted message
+    if (!sub) {
+      sub = candidate;
+      subRemaining = candRemaining;
+      subEffectiveUsed = candEffective;
+      subPeriodKey = candPeriodKey;
     }
   }
   if (!sub) return { hasActivePlan:false, planType:null, planName:'', remaining:0, max:0, expiry:null, canGenerate:false, message: l==='en' ? 'No active plan. Purchase a plan to generate itineraries.' : 'Nenhum plano ativo. Adquira um plano para gerar roteiros.' };
-  
+
   const max = PLAN_LIMITS[sub.planId as keyof typeof PLAN_LIMITS] || 0;
-  // For single, usedCount is direct. For period-based, check if periodKey matches current period
-  let effectiveUsed = sub.usedCount;
-  const currentPeriodKey = sub.planId === 'monthly' ? new Date().toISOString().slice(0,7) : Math.floor(Date.now()/(14*24*60*60*1000)).toString();
-  if (sub.planId !== 'single' && sub.periodKey !== currentPeriodKey) {
-    effectiveUsed = 0; // new period
-  }
-  const remaining = Math.max(0, max - effectiveUsed);
+  const effectiveUsed = subEffectiveUsed;
+  const currentPeriodKey = subPeriodKey;
+  const remaining = subRemaining;
   const canGenerate = remaining > 0;
   const name = PLAN_NAMES[l][sub.planId] || sub.planId;
   const msgs = {
