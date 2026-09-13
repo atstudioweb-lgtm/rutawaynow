@@ -11,6 +11,7 @@ export function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const [plan, setPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -54,21 +55,26 @@ export function CheckoutSuccessContent() {
         expiry.setFullYear(expiry.getFullYear() + 10);
       }
       // Persist to user account DB (sole source of truth - no localStorage)
+      setSaveStatus('Saving plan to your account...');
       fetch("/api/user/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ plan, expiry: expiry.toISOString(), provider: 'stripe', usedCount: 0 }),
-      }).catch(()=>{});
+      }).then(async (r) => {
+        const j = await r.json().catch(() => ({}));
+        if (r.ok) setSaveStatus(`Plan ${plan} saved to your account.`);
+        else setSaveStatus(`Save failed (${r.status}): ${j.error || 'please login with the same Google account and reopen this link'}`);
+      }).catch(()=>{ setSaveStatus('Save failed: network error. Reopen this link while logged in.'); });
     }
   }, [plan, loading]);
 
-  // Redirect to dashboard after a short delay
+  // Redirect to dashboard after a short delay (longer so save can finish)
   useEffect(() => {
     if (!loading && plan) {
       const timer = setTimeout(() => {
-        router.push('/');
-      }, 2000);
+        router.push('/account');
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [plan, loading, router]);
@@ -87,8 +93,13 @@ export function CheckoutSuccessContent() {
             : 'Payment successful!'}
         </h1>
         <p className="text-slate-600 mt-2">
-          {loading ? 'Retrieving plan details...' : 'Redirecting to dashboard...'}
+          {loading ? 'Retrieving plan details...' : 'Redirecting to your account...'}
         </p>
+        {!loading && plan && (
+          <p className="mt-3 text-sm font-medium text-slate-700">
+            Plan: {plan} {saveStatus ? `— ${saveStatus}` : ''}
+          </p>
+        )}
       </div>
     </div>
   );
