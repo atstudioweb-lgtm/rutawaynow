@@ -18,6 +18,8 @@ import type {
   Roteiro,
   TripResult,
 } from "@/types/itinerary";
+import { Carousel } from "@/components/ui/carousel";
+import { CurrencyExchangeCalculator } from "@/components/currency-exchange-calculator";
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 
 const FAVORITES_KEY = "rutawaynow-favorites";
@@ -481,10 +483,28 @@ export function Dashboard() {
               {session?.user?.image ? <img src={session.user.image} alt="" className="h-9 w-9 rounded-full object-cover" /> : (session?.user?.name?.[0] ?? "U")}
             </Link>
           ) : (
-            <button onClick={() => signIn("google", { callbackUrl: "/account" })} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Entrar</button>
+            <button onClick={() => signIn("google", { callbackUrl: "/account" })} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700">Entrar</button>
           )}
         </div>
       </header>
+
+      {/* Carousel with currency exchange calculator */}
+      <section className="mb-6 sm:mb-8" aria-label={t("carousel.label")}>
+        <Carousel
+          className="w-full"
+          showArrows
+          showDots
+          autoPlay={false}
+          ariaLabels={{
+            region: t("carousel.label"),
+            previous: t("carousel.previous"),
+            next: t("carousel.next"),
+            goTo: t("carousel.goTo"),
+          }}
+        >
+          <CurrencyExchangeCalculator />
+        </Carousel>
+      </section>
 
       {tripResult && generatedLang && generatedLang !== lang && (
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-indigo-200 bg-indigo-50 p-4 gap-3">

@@ -276,6 +276,26 @@ export const pt = {
     cancelSuccess: "Assinatura cancelada. Você ainda pode usar {remaining} de {max} roteiros até {date}.",
     days: "dias",
   },
+  currencyExchange: {
+    title: "Calculadora de câmbio",
+    fromLabel: "De",
+    toLabel: "Para",
+    amountLabel: "Valor",
+    resultLabel: "Resultado",
+    loading: "Convertendo...",
+    rateTimestamp: "Taxa atualizada em {timestamp}",
+    swap: "Inverter moedas",
+    searchPlaceholder: "Buscar moeda...",
+    noResults: "Nenhuma moeda encontrada.",
+    error: "Não foi possível obter a taxa de câmbio. Tente novamente.",
+  },
+  carousel: {
+    label: "Ferramentas e utilidades",
+    currencyExchange: "Câmbio",
+    previous: "Slide anterior",
+    next: "Próximo slide",
+    goTo: "Ir para o slide {n}",
+  },
 };
 
 export type Messages = typeof pt;
