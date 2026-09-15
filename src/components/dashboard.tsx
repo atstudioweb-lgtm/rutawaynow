@@ -51,6 +51,7 @@ export function Dashboard() {
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [checklistLang, setChecklistLang] = useState<"pt" | "en" | null>(null);
   const [checklistOpen, setChecklistOpen] = useState(false);
+  const [showExchange, setShowExchange] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
   const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
   const [checklistError, setChecklistError] = useState<string | null>(null);
@@ -463,7 +464,7 @@ export function Dashboard() {
 
   return (
     <div className="mx-auto w-full max-w-7xl flex-1 px-2 pb-10 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-3 py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <header className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
             <Icon name="plane" className="h-5 w-5" />
@@ -488,23 +489,33 @@ export function Dashboard() {
         </div>
       </header>
 
-      {/* Carousel with currency exchange calculator */}
-      <section className="mb-6 sm:mb-8" aria-label={t("carousel.label")}>
+      <nav className="mb-5" aria-label={t("carousel.label")}>
         <Carousel
-          className="w-full"
-          showArrows
-          showDots
-          autoPlay={false}
-          ariaLabels={{
-            region: t("carousel.label"),
-            previous: t("carousel.previous"),
-            next: t("carousel.next"),
-            goTo: t("carousel.goTo"),
-          }}
+          ariaLabel={t("carousel.label")}
+          className="-mx-2 px-2 sm:mx-0 sm:px-0 lg:snap-none lg:overflow-visible"
         >
-          <CurrencyExchangeCalculator />
+          <button
+            type="button"
+            onClick={() => setShowExchange((value) => !value)}
+            aria-pressed={showExchange}
+            title={t("currencyExchange.title")}
+            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold shadow-sm transition ${
+              showExchange
+                ? "border-indigo-300 bg-indigo-600 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            }`}
+          >
+            <Icon name="wallet" className="h-4 w-4" />
+            {t("carousel.currencyExchange")}
+          </button>
         </Carousel>
-      </section>
+      </nav>
+
+      {showExchange && (
+        <section className="mb-6 sm:mb-8" aria-label={t("currencyExchange.title")}>
+          <CurrencyExchangeCalculator />
+        </section>
+      )}
 
       {tripResult && generatedLang && generatedLang !== lang && (
         <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-indigo-200 bg-indigo-50 p-4 gap-3">
