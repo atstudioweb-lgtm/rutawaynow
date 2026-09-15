@@ -15,6 +15,11 @@ export interface CreateMercadoPagoParams {
   provider: 'stripe' | 'mercadopago';
 }
 
+interface MercadoPagoRedirect {
+  init_point?: string;
+  sandbox_init_point?: string;
+}
+
 export async function createMercadoPagoPreference(params: CreateMercadoPagoParams) {
   const { plan, userId, userEmail, userName, userPhone, userDocument, successUrl, cancelUrl } = params;
 
@@ -36,8 +41,12 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
       email: userEmail,
       name: userName?.split(' ')[0],
       surname: userName?.split(' ').slice(1).join(' ') || '',
-      phone: userPhone ? { area_code: userPhone.slice(0, 2), number: userPhone.slice(2) } : undefined,
-      identification: userDocument ? { type: 'CPF', number: userDocument.replace(/\D/g, '') } : undefined,
+      ...(userPhone
+        ? { phone: { area_code: userPhone.replace(/\D/g, '').slice(0, 2), number: userPhone.replace(/\D/g, '').slice(2) } }
+        : {}),
+      ...(userDocument
+        ? { identification: { type: 'CPF', number: userDocument.replace(/\D/g, '') } }
+        : {}),
     },
     back_urls: {
       success: successUrl,
@@ -45,7 +54,7 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
       pending: cancelUrl,
     },
     auto_return: 'approved',
-    external_reference: params.userId,
+    external_reference: `${userId}|${plan.id}`,
     notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhooks/mercadopago`,
     metadata: {
       user_id: userId,
@@ -54,28 +63,22 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
     },
     expires: false,
     expires_at: undefined,
-    ...(isSubscription && {
-      // For subscriptions, we create a preapproval plan instead
-    }),
   };
 
   if (isSubscription) {
-    // Create preapproval plan for recurring payments
-    const { t } = getTranslation('pt');
+    // Create preapproval plan for recurring, auto-renewing payments
     const planData = {
       reason: `RutawayNow - ${t(params.plan.nameKey)}`,
       auto_recurring: {
         frequency: 1,
         frequency_type: params.plan.interval === 'month' ? 'months' : 'weeks',
-        repetitions: 12, // 12 months/weeks
-        billing_day: 1,
+        ...(params.plan.interval === 'month' ? { billing_day: 1 } : {}),
         billing_day_proportional: true,
-        free_trial: { frequency: 1, frequency_type: 'months' },
         transaction_amount: amount,
         currency_id: 'BRL',
       },
       payment_methods_allowed: {
-        payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'pix' }],
+        payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }],
         payment_methods: undefined,
       },
       back_url: successUrl,
@@ -83,31 +86,35 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
 
     const preApprovalPlanResult = await preApprovalPlan.create({ body: planData });
 
-    // Create preapproval (subscription) for the user
+    // Create preapproval (subscription) for the user.
+    // Note: subscription notifications can only be configured during payment
+    // creation (notification_url), not via "Your integrations".
     const preApprovalData = {
       preapproval_plan_id: preApprovalPlanResult.id,
       payer_email: userEmail,
-      card_token_id: undefined, // Will be filled when user adds card
       status: 'pending',
-      external_reference: userId,
+      external_reference: `${userId}|${plan.id}`,
       back_url: successUrl,
+      notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhooks/mercadopago`,
     };
 
     const preApprovalResult = await preApproval.create({ body: preApprovalData });
+    const preApprovalRedirect = preApprovalResult as unknown as MercadoPagoRedirect;
 
     return {
       id: preApprovalResult.id,
-      init_point: preApprovalResult.init_point,
-      sandbox_init_point: (preApprovalResult as any).sandbox_init_point,
+      init_point: preApprovalRedirect.init_point,
+      sandbox_init_point: preApprovalRedirect.sandbox_init_point,
     };
   }
 
   const preferenceResult = await preference.create({ body: preferenceData });
+  const preferenceRedirect = preferenceResult as unknown as MercadoPagoRedirect;
 
   return {
     id: preferenceResult.id,
-    init_point: preferenceResult.init_point,
-    sandbox_init_point: (preferenceResult as any).sandbox_init_point,
+    init_point: preferenceRedirect.init_point,
+    sandbox_init_point: preferenceRedirect.sandbox_init_point,
   };
 }
 

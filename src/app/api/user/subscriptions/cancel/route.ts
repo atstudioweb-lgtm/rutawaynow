@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/payments/stripe/client";
+import { cancelMercadoPagoSubscription } from "@/lib/payments/mercadopago/checkout";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -16,7 +17,22 @@ export async function POST(req: NextRequest) {
 
   if (!sub) return NextResponse.json({ error: "No active subscription" }, { status: 404 });
   if (sub.planId === "single") return NextResponse.json({ error: "Single plan cannot be cancelled" }, { status: 400 });
-  if (sub.provider !== "stripe") return NextResponse.json({ error: "Only Stripe subscriptions can be cancelled here" }, { status: 400 });
+
+  if (sub.provider === "mercadopago") {
+    if (!sub.mercadoPagoId) {
+      return NextResponse.json({ error: "No Mercado Pago subscription id" }, { status: 400 });
+    }
+    try {
+      await cancelMercadoPagoSubscription(sub.mercadoPagoId);
+    } catch (e) {
+      console.error("Mercado Pago cancel failed", e);
+      return NextResponse.json({ error: "Failed to cancel on Mercado Pago" }, { status: 500 });
+    }
+    // Keep DB active until expiry so user keeps remaining itineraries (same as Stripe)
+    return NextResponse.json({ ok: true, cancelledAtPeriodEnd: true });
+  }
+
+  if (sub.provider !== "stripe") return NextResponse.json({ error: "Only Stripe or Mercado Pago subscriptions can be cancelled here" }, { status: 400 });
   let stripeSubId = sub.stripeSubscriptionId;
   // Fallback for old subscriptions created before stripeSubscriptionId was saved (or localStorage-only plans)
   if (!stripeSubId) {

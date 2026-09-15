@@ -20,9 +20,11 @@ export async function POST(req: NextRequest) {
     const { auth } = await import('@/lib/auth');
     const session = await auth();
     console.log('Checkout session:', session?.user?.email, session?.user?.id);
-    const user = session?.user?.id
-      ? { id: (session.user as { id: string }).id, email: session.user.email || 'user@example.com', name: session.user.name || 'Usuário', phone: '+55 11 99999-9999', document: '123.456.789-00' }
-      : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste', phone: '+55 11 99999-9999', document: '123.456.789-00' };
+    const user = {
+      id: (session?.user as { id?: string } | null)?.id || 'user_123',
+      email: session?.user?.email || 'user@example.com',
+      name: session?.user?.name || 'Usuário Teste',
+    };
     console.log('Checkout user:', user.email, user.id);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -58,18 +60,16 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ url: result.url, sessionId: result.sessionId });
     } else if (provider === 'mercadopago') {
-const result = await createMercadoPagoPreference({
-      plan,
-      currency: 'BRL',
-      userId: user.id,
-      userEmail: user.email,
-      userName: user.name,
-      userPhone: user.phone,
-      userDocument: user.document,
-      successUrl: `${baseUrl}/checkout/success`,
-      cancelUrl: cancelUrl || `${baseUrl}/pricing`,
-      provider: 'mercadopago',
-    });
+      const result = await createMercadoPagoPreference({
+        plan,
+        currency: 'BRL',
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        successUrl: `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=mercadopago`,
+        cancelUrl: cancelUrl || `${baseUrl}/pricing`,
+        provider: 'mercadopago',
+      });
 
       return NextResponse.json({ url: result.init_point, preferenceId: result.id });
     } else {

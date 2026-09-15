@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
-import { Plan, getAllPlans } from '@/config/pricing';
-import { getTranslation } from '@/lib/i18n-server';
+import { getAllPlans } from '@/config/pricing';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,17 +13,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Plano inválido' }, { status: 400 });
     }
 
-    const user = {
-      id: 'user_123',
-      email: 'user@example.com',
-      name: 'Usuário Teste',
-      phone: '+55 11 99999-9999',
-      document: '123.456.789-00',
-    };
+    // Get user from session (real logged-in user)
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    const user = session?.user?.id
+      ? { id: (session.user as { id: string }).id, email: session.user.email || 'user@example.com', name: session.user.name || 'Usuário' }
+      : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste' };
+    console.log('Mercado Pago checkout user:', user.email, user.id);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-const { t } = getTranslation('pt');
 
     const result = await createMercadoPagoPreference({
       plan,
@@ -32,8 +29,6 @@ const { t } = getTranslation('pt');
       userId: user.id,
       userEmail: user.email,
       userName: user.name,
-      userPhone: user.phone,
-      userDocument: user.document,
       successUrl: `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}`,
       cancelUrl: cancelUrl || `${baseUrl}/pricing`,
       provider: 'mercadopago',

@@ -2,40 +2,51 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useI18n } from '@/i18n/provider';
-import { Icon } from '@/components/icons';
 
 export function CheckoutSuccessContent() {
-  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [plan, setPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string | null>('Saving plan to your account...');
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    
-    // Retrieve plan from Stripe session via API route
+    const provider = searchParams.get('provider') || 'stripe';
+    const fallbackPlan = searchParams.get('plan_id');
+
+    // Retrieve plan from Stripe session or Mercado Pago payment via API route
     (async () => {
       try {
-        if (!sessionId) {
-          throw new Error('No session ID');
+        if (provider === 'stripe') {
+          if (!sessionId) {
+            throw new Error('No session ID');
+          }
+          const response = await fetch(`/api/stripe/session/${sessionId}`);
+          const data = await response.json();
+          if (data.planType) {
+            setPlan(data.planType);
+            return;
+          }
+        } else if (provider === 'mercadopago') {
+          const collectionId = searchParams.get('collection_id') || searchParams.get('payment_id');
+          if (collectionId) {
+            const response = await fetch(`/api/payments/mercadopago/payment/${collectionId}`);
+            const data = await response.json().catch(() => ({}));
+            if (data.planType) {
+              setPlan(data.planType);
+              return;
+            }
+          }
         }
-        const response = await fetch(`/api/stripe/session/${sessionId}`);
-        const data = await response.json();
-        if (data.planType) {
-          setPlan(data.planType);
-        } else {
-          // Fallback to URL param or monthly
-          const planId = searchParams.get('plan_id');
-          const plan = planId && planId.trim() ? planId : 'monthly';
-          setPlan(plan);
-        }
-      } catch (error) {
-        console.error('Failed to retrieve Stripe session:', error);
         // Fallback to URL param or monthly
-        const planId = searchParams.get('plan_id');
+        const planId = fallbackPlan;
+        const plan = planId && planId.trim() ? planId : 'monthly';
+        setPlan(plan);
+      } catch (error) {
+        console.error('Failed to retrieve payment details:', error);
+        // Fallback to URL param or monthly
+        const planId = fallbackPlan;
         const plan = planId && planId.trim() ? planId : 'monthly';
         setPlan(plan);
       } finally {
@@ -54,20 +65,20 @@ export function CheckoutSuccessContent() {
       } else {
         expiry.setFullYear(expiry.getFullYear() + 10);
       }
+      const provider = searchParams.get('provider') || 'stripe';
       // Persist to user account DB (sole source of truth - no localStorage)
-      setSaveStatus('Saving plan to your account...');
       fetch("/api/user/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ plan, expiry: expiry.toISOString(), provider: 'stripe', usedCount: 0 }),
+        body: JSON.stringify({ plan, expiry: expiry.toISOString(), provider, usedCount: 0 }),
       }).then(async (r) => {
         const j = await r.json().catch(() => ({}));
         if (r.ok) setSaveStatus(`Plan ${plan} saved to your account.`);
         else setSaveStatus(`Save failed (${r.status}): ${j.error || 'please login with the same Google account and reopen this link'}`);
       }).catch(()=>{ setSaveStatus('Save failed: network error. Reopen this link while logged in.'); });
     }
-  }, [plan, loading]);
+  }, [plan, loading, searchParams]);
 
   // Redirect to dashboard after a short delay (longer so save can finish)
   useEffect(() => {

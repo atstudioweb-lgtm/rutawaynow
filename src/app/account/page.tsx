@@ -96,7 +96,7 @@ export default function AccountPage() {
               {subs.filter(s=> s.status === 'active').map(s=> (
                 <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
                   <span>{t(`pricing.${s.planId}.name`)} — {s.planId === 'single' && s.usedCount >= s.maxItineraries ? (lang === 'en' ? 'Closed' : 'Encerrado') : t("account.active")} — {s.usedCount}/{s.maxItineraries}{s.planId !== 'single' ? ` • ${t("account.expires")} ${safeLocaleDate(s.expiryAt, lang)}` : ""}</span>
-                  {s.status === 'active' && s.provider === 'stripe' && s.planId !== 'single' && (
+                  {s.status === 'active' && (s.provider === 'stripe' || s.provider === 'mercadopago') && s.planId !== 'single' && (
                     <button onClick={async ()=>{
                       if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
                       const r = await fetch("/api/user/subscriptions/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscriptionId: s.id }) });
