@@ -12,6 +12,13 @@ type Sub = { id: string; planId: string; status: string; expiryAt: string; usedC
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 type Check = { id: string; itineraryId?: string; items: unknown; checked?: number[][]; lang: string; createdAt: string; itinerary?: { destination: string } };
 
+function safeLocaleDate(value: string, lang: "pt" | "en", withTime = false): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const locale = lang === "en" ? "en-US" : "pt-BR";
+  return withTime ? date.toLocaleString(locale) : date.toLocaleDateString(locale);
+}
+
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -45,7 +52,7 @@ export default function AccountPage() {
     const raw = check.items as Record<string, unknown>;
     const checklist = {
       destino: (raw.destino as string) || check.itinerary?.destination || "Checklist",
-      periodo: (raw.periodo as string) || new Date(check.createdAt).toLocaleDateString(),
+      periodo: (raw.periodo as string) || safeLocaleDate(check.createdAt, lang),
       categorias: (raw.categorias as unknown) as never || [],
     } as import("@/types/itinerary").Checklist;
     generateChecklistPdf(checklist, check.checked as never, undefined, undefined);
@@ -88,7 +95,7 @@ export default function AccountPage() {
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
               {subs.filter(s=> s.status === 'active').map(s=> (
                 <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
-                  <span>{t(`pricing.${s.planId}.name`)} — {s.planId === 'single' && s.usedCount >= s.maxItineraries ? (lang === 'en' ? 'Closed' : 'Encerrado') : t("account.active")} — {s.usedCount}/{s.maxItineraries}{s.planId !== 'single' ? ` • ${t("account.expires")} ${new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR')}` : ""}</span>
+                  <span>{t(`pricing.${s.planId}.name`)} — {s.planId === 'single' && s.usedCount >= s.maxItineraries ? (lang === 'en' ? 'Closed' : 'Encerrado') : t("account.active")} — {s.usedCount}/{s.maxItineraries}{s.planId !== 'single' ? ` • ${t("account.expires")} ${safeLocaleDate(s.expiryAt, lang)}` : ""}</span>
                   {s.status === 'active' && s.provider === 'stripe' && s.planId !== 'single' && (
                     <button onClick={async ()=>{
                       if(!confirm(t("account.cancelConfirm") || "Cancel this subscription?")) return;
@@ -96,7 +103,7 @@ export default function AccountPage() {
                       const j = await r.json().catch(()=> ({}));
                       if(r.ok) {
                         const remaining = s.maxItineraries - s.usedCount;
-                        const dateStr = new Date(s.expiryAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'pt-BR');
+                        const dateStr = safeLocaleDate(s.expiryAt, lang);
                         const msg = t("account.cancelSuccess", { remaining, max: s.maxItineraries, date: dateStr });
                         alert(msg !== "account.cancelSuccess" ? msg : `Subscription cancelled. You can still use ${remaining} itineraries until ${dateStr}.`);
                         fetch(`/api/user/subscriptions?lang=${lang}`).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
@@ -117,7 +124,7 @@ export default function AccountPage() {
           <div className="mt-4 grid gap-3">
             {its.length > 0 ? its.map(it=> (
               <div key={it.id} className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div><div className="font-medium">{it.destination} — {it.days} {t("account.days")} • {it.month}</div><div className="text-xs text-slate-500">{new Date(it.createdAt).toLocaleString()} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
+                <div><div className="font-medium">{it.destination} — {it.days} {t("account.days")} • {it.month}</div><div className="text-xs text-slate-500">{safeLocaleDate(it.createdAt, lang, true)} • {it.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
                   <button onClick={()=> router.push(`/?view=${it.id}`)} className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t("account.viewItinerary") || "View"}</button>
                   {it.pdfUrl ? <a href={it.pdfUrl} target="_blank" className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</a> : <button onClick={()=>handlePdf(it)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</button>}
@@ -145,7 +152,7 @@ export default function AccountPage() {
               const periodo = (raw.periodo as string) || "";
               return (
               <div key={ch.id} className="rounded-xl border p-4 flex items-center justify-between">
-                <div><div className="font-medium">{destino}{periodo ? ` — ${periodo}` : ""}</div><div className="text-xs text-slate-500">{new Date(ch.createdAt).toLocaleString()} • {ch.lang === 'en' ? 'English' : 'Português'}</div></div>
+                <div><div className="font-medium">{destino}{periodo ? ` — ${periodo}` : ""}</div><div className="text-xs text-slate-500">{safeLocaleDate(ch.createdAt, lang, true)} • {ch.lang === 'en' ? 'English' : 'Português'}</div></div>
                 <div className="flex gap-2">
                   <button onClick={()=>handleChecklistPdf(ch)} className="inline-flex rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{t("account.downloadPdf")}</button>
                 </div>
