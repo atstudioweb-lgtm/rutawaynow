@@ -20,6 +20,7 @@ import type {
 } from "@/types/itinerary";
 import { Carousel } from "@/components/ui/carousel";
 import { CurrencyExchangeCalculator } from "@/components/currency-exchange-calculator";
+import { FlightsSearch } from "@/components/flights-search";
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 
 const FAVORITES_KEY = "rutawaynow-favorites";
@@ -52,6 +53,7 @@ export function Dashboard() {
   const [checklistLang, setChecklistLang] = useState<"pt" | "en" | null>(null);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [showExchange, setShowExchange] = useState(false);
+  const [showFlights, setShowFlights] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
   const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
   const [checklistError, setChecklistError] = useState<string | null>(null);
@@ -508,12 +510,32 @@ export function Dashboard() {
             <Icon name="wallet" className="h-4 w-4" />
             {t("carousel.currencyExchange")}
           </button>
+          <button
+            type="button"
+            onClick={() => setShowFlights((value) => !value)}
+            aria-pressed={showFlights}
+            title={t("flights.title")}
+            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold shadow-sm transition ${
+              showFlights
+                ? "border-indigo-300 bg-indigo-600 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            }`}
+          >
+            <Icon name="plane" className="h-4 w-4" />
+            {t("carousel.flights")}
+          </button>
         </Carousel>
       </nav>
 
       {showExchange && (
         <section className="mb-6 sm:mb-8" aria-label={t("currencyExchange.title")}>
           <CurrencyExchangeCalculator />
+        </section>
+      )}
+
+      {showFlights && (
+        <section className="mb-6 sm:mb-8" aria-label={t("flights.title")}>
+          <FlightsSearch />
         </section>
       )}
 

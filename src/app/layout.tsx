@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { I18nProvider } from "@/i18n/provider";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
@@ -25,6 +26,11 @@ export default function RootLayout({
         <SessionProvider>
           <I18nProvider>{children}</I18nProvider>
         </SessionProvider>
+        <Script
+          strategy="afterInteractive"
+          src="https://tpembars.com/NTc0Nzk4.js?t=574798"
+          data-cmp-ab="2"
+        />
       </body>
     </html>
   );
