@@ -38,7 +38,7 @@ export function verifyMercadoPagoWebhookSignature(params: {
   requestId: string | null;
   dataId?: string;
 }): boolean {
-  const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+  const secret = (process.env.MERCADO_PAGO_WEBHOOK_SECRET || '').trim();
   if (!secret) return true;
 
   const signature = parseSignature(params.signature);
