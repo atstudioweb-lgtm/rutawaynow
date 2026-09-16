@@ -161,6 +161,13 @@ async function creditPlan(params: { userId: string; planId: string; mercadoPagoI
     return false;
   }
 
+  // Couldn't credit a user that does not exist (e.g. checkout done without login).
+  const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!userExists) {
+    console.warn('Mercado Pago credit skipped: user not found', { userId, planId, mercadoPagoId });
+    return false;
+  }
+
   // Idempotency: never credit the same Mercado Pago id twice.
   const existingById = await prisma.subscription.findUnique({ where: { mercadoPagoId } });
   if (existingById) {

@@ -28,9 +28,10 @@ function parseSignature(signature: string | null): MercadoPagoSignatureParts | n
  * The key is the "secret signature" generated in Your integrations → your app
  * → Webhooks → Configure notification (not a dashboard credential).
  *
- * If MERCADO_PAGO_WEBHOOK_SECRET is not configured the webhook is accepted
- * without verification (dev/sandbox mode). A missing x-signature header also
- * fails verification when a secret is configured.
+ * Verification is only enforced when a signature header is present AND
+ * MERCADO_PAGO_WEBHOOK_SECRET is configured. Webhooks arriving without
+ * `x-signature` (common for `notification_url`-configured webhooks) are
+ * accepted so they are not silently dropped.
  */
 export function verifyMercadoPagoWebhookSignature(params: {
   signature: string | null;
@@ -41,7 +42,10 @@ export function verifyMercadoPagoWebhookSignature(params: {
   if (!secret) return true;
 
   const signature = parseSignature(params.signature);
-  if (!signature) return false;
+  if (!signature) {
+    console.warn('Mercado Pago webhook received without x-signature; accepting');
+    return true;
+  }
 
   const manifest =
     (params.dataId ? `id:${params.dataId.toLowerCase()};` : '') +

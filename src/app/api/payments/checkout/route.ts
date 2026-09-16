@@ -60,6 +60,12 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ url: result.url, sessionId: result.sessionId });
     } else if (provider === 'mercadopago') {
+      if (!session?.user?.id) {
+        return NextResponse.json(
+          { error: 'Faça login para pagar com Mercado Pago — sem login o plano não pode ser creditado.' },
+          { status: 401 }
+        );
+      }
       const result = await createMercadoPagoPreference({
         plan,
         currency: 'BRL',

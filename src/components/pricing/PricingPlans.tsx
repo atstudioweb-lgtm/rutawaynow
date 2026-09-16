@@ -69,7 +69,7 @@ export function PricingPlans() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Erro ao criar sessão de pagamento');
+        alert(data.error || 'Erro ao criar sessão de pagamento');
       }
     } catch (error) {
       console.error('Checkout error:', error);
