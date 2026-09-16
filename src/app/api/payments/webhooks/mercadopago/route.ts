@@ -79,6 +79,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
+    const status = (err as { status?: number })?.status;
+    const message = String((err as { message?: string })?.message ?? '').toLowerCase();
+    if (status === 404 || message.includes('not found')) {
+      // e.g. simulated test notifications referencing a non-existent resource
+      console.warn('Mercado Pago resource not found for notification, acknowledging receipt', { topic, id });
+      return NextResponse.json({ received: true, skipped: 'resource_not_found' });
+    }
     console.error('Mercado Pago webhook handler error:', err);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
