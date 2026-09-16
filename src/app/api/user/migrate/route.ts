@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     plan?: string; expiry?: string; provider?: string; usedCount?: number; itineraries?: unknown[]; checklists?: unknown[];
   };
 
+  let created = false;
+  let reason: "created" | "already_active" | "no-op" = "no-op";
   if (plan && expiry) {
     const max = PLAN_LIMITS[plan] ?? 0;
     const expiryAt = new Date(expiry);
@@ -27,7 +29,9 @@ export async function POST(req: NextRequest) {
         expiryAt: { gt: now },
       },
     });
-    if (!samePlanActive) {
+    if (samePlanActive) {
+      reason = "already_active";
+    } else {
       await prisma.subscription.create({
         data: {
           userId,
@@ -41,6 +45,8 @@ export async function POST(req: NextRequest) {
           periodKey: plan === "single" ? null : periodKey,
         },
       });
+      created = true;
+      reason = "created";
     }
   }
 
@@ -80,5 +86,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true });
+  console.log("POST /api/user/migrate", { userId, plan, provider, created, reason });
+  return NextResponse.json({ ok: true, created, reason });
 }

@@ -74,8 +74,13 @@ export function CheckoutSuccessContent() {
         body: JSON.stringify({ plan, expiry: expiry.toISOString(), provider, usedCount: 0 }),
       }).then(async (r) => {
         const j = await r.json().catch(() => ({}));
-        if (r.ok) setSaveStatus(`Plan ${plan} saved to your account.`);
-        else setSaveStatus(`Save failed (${r.status}): ${j.error || 'please login with the same Google account and reopen this link'}`);
+        if (r.ok) {
+          if (j.created) setSaveStatus(`Plan ${plan} saved to your account.`);
+          else if (j.reason === 'already_active') setSaveStatus(`Plan ${plan} is already active — nothing changed.`);
+          else setSaveStatus(`Plan ${plan} confirmed.`);
+        } else {
+          setSaveStatus(`Save failed (${r.status}): ${j.error || 'please login with the same Google account and reopen this link'}`);
+        }
       }).catch(()=>{ setSaveStatus('Save failed: network error. Reopen this link while logged in.'); });
     }
   }, [plan, loading, searchParams]);

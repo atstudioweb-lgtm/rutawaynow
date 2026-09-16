@@ -33,6 +33,16 @@ export async function POST(req: NextRequest) {
   const queryDataId = req.nextUrl.searchParams.get('data.id') || undefined;
   const dataId = queryDataId ?? String(event.data?.id ?? event.id ?? '');
 
+  console.log('Mercado Pago webhook received', {
+    signaturePresent: !!signature,
+    signatureHeader: signature ? `${signature.slice(0, 40)}...` : '(none)',
+    requestIdPresent: !!requestId,
+    secretConfigured: !!process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+    topic: event.type ?? event.topic,
+    eventId: String(event.data?.id ?? event.id ?? ''),
+    dataId,
+  });
+
   if (!verifyMercadoPagoWebhookSignature({ signature, requestId, dataId })) {
     console.error('Mercado Pago webhook signature verification failed');
     return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
