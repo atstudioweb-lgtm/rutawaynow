@@ -29,6 +29,8 @@ export function formatDdmm(date: string): string {
   return `${day}${month}`;
 }
 
+const PASSENGERS = "1";
+
 export function buildAviasalesUrl({
   origin,
   destination,
@@ -39,12 +41,12 @@ export function buildAviasalesUrl({
   const market = MARKETS[lang];
   const departure = formatDdmm(departDate);
   const ret = returnDate ? formatDdmm(returnDate) : "";
-  const code = `${origin}${departure}${destination}${ret}`;
+  const code = `${origin}${departure}${destination}${ret}${PASSENGERS}`;
 
   const params = new URLSearchParams();
   const marker = process.env.NEXT_PUBLIC_AVIASALES_MARKER;
   if (marker) params.set("marker", marker);
-  params.set("curr", market.currency);
+  params.set("currency", market.currency);
   params.set("locale", market.locale);
 
   return `${market.host}/search/${code}?${params.toString()}`;
