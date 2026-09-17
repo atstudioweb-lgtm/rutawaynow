@@ -58,6 +58,11 @@ export default function AccountPage() {
     generateChecklistPdf(checklist, check.checked as never, undefined, undefined);
   };
 
+  // Defensive: show at most one active subscription per plan (list is sorted newest first)
+  const activeSubs = subs
+    .filter(s => s.status === 'active')
+    .filter((s, i, arr) => arr.findIndex(x => x.planId === s.planId) === i);
+
   if (status === "loading") return <div className="p-8">{t("account.loading")}</div>;
   if (status === "unauthenticated") return (
     <main className="min-h-screen flex items-center justify-center p-6">
@@ -90,10 +95,10 @@ export default function AccountPage() {
               </div>
             )
           ) : <p className="text-sm text-slate-500">{t("account.loadingPlan")}</p>}
-          {subs.filter(s=> s.status === 'active').length > 0 && (
+          {activeSubs.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("account.subscriptionHistory")}</h3>
-              {subs.filter(s=> s.status === 'active').map(s=> (
+              {activeSubs.map(s=> (
                 <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-3 text-sm gap-2">
                   <span>{t(`pricing.${s.planId}.name`)} — {s.planId === 'single' && s.usedCount >= s.maxItineraries ? (lang === 'en' ? 'Closed' : 'Encerrado') : t("account.active")} — {s.usedCount}/{s.maxItineraries}{s.planId !== 'single' ? ` • ${t("account.expires")} ${safeLocaleDate(s.expiryAt, lang)}` : ""}</span>
                   {s.status === 'active' && (s.provider === 'stripe' || s.provider === 'mercadopago') && s.planId !== 'single' && (

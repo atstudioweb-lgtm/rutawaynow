@@ -71,7 +71,6 @@ export const PLANS: Record<PlanId, Plan> = {
       'pricing.monthly.feature3',
       'pricing.monthly.feature4',
       'pricing.monthly.feature5',
-      'pricing.monthly.feature6',
     ],
   },
 };

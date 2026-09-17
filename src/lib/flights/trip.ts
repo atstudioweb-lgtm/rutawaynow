@@ -49,3 +49,30 @@ export function buildTripUrl({
 
   return `${market.host}/flights/showfarefirst?${params.toString()}`;
 }
+
+function withAffiliate(params: URLSearchParams) {
+  const allianceId = process.env.NEXT_PUBLIC_TRIP_ALLIANCEID;
+  const sid = process.env.NEXT_PUBLIC_TRIP_SID;
+  if (allianceId && sid) {
+    params.set("Allianceid", allianceId);
+    params.set("SID", sid);
+  }
+  return params;
+}
+
+export function buildTripHotelsUrl(lang: Language): string {
+  const market = MARKETS[lang];
+  const params = withAffiliate(new URLSearchParams());
+  params.set("locale", market.locale);
+  params.set("curr", market.currency);
+  return `${market.host}/hotels/?${params.toString()}`;
+}
+
+export function buildTripPackagesUrl(lang: Language): string {
+  const market = MARKETS[lang];
+  const params = withAffiliate(new URLSearchParams());
+  params.set("sourceFrom", "IBUBundle_home");
+  params.set("locale", market.locale);
+  params.set("curr", market.currency);
+  return `${market.host}/packages/?${params.toString()}`;
+}

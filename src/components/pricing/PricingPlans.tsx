@@ -177,6 +177,12 @@ export function PricingPlans() {
             </p>
           </div>
         </div>
+
+        {/* Trust Footer */}
+        <footer className="mt-8 space-y-2 text-center">
+          <p className="text-sm font-medium text-slate-700">{t('pricing.cancelAnytime')}</p>
+          <p className="text-sm text-slate-500">{t('pricing.securePayment')}</p>
+        </footer>
       </div>
     </section>
   );

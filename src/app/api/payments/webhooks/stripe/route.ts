@@ -65,6 +65,14 @@ async function handleCheckoutCompleted(session: any) {
     console.warn('Missing userId or planId in checkout session', session.id);
     return;
   }
+
+  // Idempotency: ignore duplicate webhooks for the same checkout session
+  const existing = await prisma.subscription.findUnique({ where: { stripeSessionId: session.id } });
+  if (existing) {
+    console.log('Skipping already processed checkout session', session.id);
+    return;
+  }
+
   const max = PLAN_LIMITS[planId] ?? 0;
   const now = new Date();
   const expiry = new Date(now);
@@ -74,21 +82,42 @@ async function handleCheckoutCompleted(session: any) {
 
   const periodKey = planId === 'monthly' ? now.toISOString().slice(0, 7) : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
 
-  await prisma.subscription.create({
-    data: {
-      userId,
-      planId,
-      provider: 'stripe',
-      status: 'active',
-      startAt: now,
-      expiryAt: expiry,
-      maxItineraries: max,
-      usedCount: 0,
-      periodKey: planId === 'single' ? null : periodKey,
-      stripeSessionId: session.id,
-      stripeSubscriptionId: session.subscription as string | null,
-    },
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Keep at most one active single subscription: supersede older active single rows
+      if (planId === 'single') {
+        await tx.subscription.updateMany({
+          where: { userId, planId, status: 'active' },
+          data: { status: 'expired' },
+        });
+      }
+      await tx.subscription.create({
+        data: {
+          userId,
+          planId,
+          provider: 'stripe',
+          status: 'active',
+          startAt: now,
+          expiryAt: expiry,
+          maxItineraries: max,
+          usedCount: 0,
+          periodKey: planId === 'single' ? null : periodKey,
+          stripeSessionId: session.id,
+          stripeSubscriptionId: session.subscription as string | null,
+        },
+      });
+    });
+  } catch (err) {
+    const castErr = err as { code?: string; meta?: { target?: unknown } };
+    const target = Array.isArray(castErr.meta?.target)
+      ? castErr.meta.target.join(',')
+      : String(castErr.meta?.target ?? '');
+    if (castErr.code === 'P2002' && target.includes('stripeSessionId')) {
+      console.log('Duplicate checkout session already processed', session.id);
+      return;
+    }
+    throw err;
+  }
   console.log('Created subscription', { userId, planId });
 }
 

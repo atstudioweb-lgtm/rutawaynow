@@ -239,7 +239,6 @@ export const en: Messages = {
       feature3: "Automatic translation",
       feature4: "PDF download",
       feature5: "Priority support",
-      feature6: "Early access to new features",
     },
     stripe: {
       name: "Stripe",
@@ -249,6 +248,8 @@ export const en: Messages = {
       name: "Mercado Pago",
       description: "PIX, Brazilian cards, Boleto, Mercado Pago balance",
     },
+    cancelAnytime: "Cancel anytime: no penalties, no hassle.",
+    securePayment: "Secure payment: Stripe and Mercado Pago",
   },
   account: {
     myAccount: "My account",
@@ -316,6 +317,8 @@ export const en: Messages = {
     label: "Tools",
     currencyExchange: "Exchange",
     flights: "Flights",
+    hotels: "Hotels",
+    flightHotel: "Flight + Hotel",
     previous: "Previous slide",
     next: "Next slide",
     goTo: "Go to slide {n}",

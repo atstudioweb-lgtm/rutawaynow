@@ -237,7 +237,6 @@ export const pt = {
       feature3: "Tradução automática",
       feature4: "PDF para download",
       feature5: "Suporte prioritário",
-      feature6: "Acesso antecipado a novidades",
     },
     stripe: {
       name: "Stripe",
@@ -247,6 +246,8 @@ export const pt = {
       name: "Mercado Pago",
       description: "PIX, Cartões brasileiros, Boleto, Saldo Mercado Pago",
     },
+    cancelAnytime: "Cancele quando quiser: sem multa, sem burocracia",
+    securePayment: "Pagamento seguro: Stripe e Mercado Pago",
   },
   account: {
     myAccount: "Minha conta",
@@ -314,6 +315,8 @@ export const pt = {
     label: "Ferramentas e utilidades",
     currencyExchange: "Câmbio",
     flights: "Voos",
+    hotels: "Hotéis",
+    flightHotel: "Voo + Hotel",
     previous: "Slide anterior",
     next: "Próximo slide",
     goTo: "Ir para o slide {n}",

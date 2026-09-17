@@ -21,6 +21,7 @@ import type {
 import { Carousel } from "@/components/ui/carousel";
 import { CurrencyExchangeCalculator } from "@/components/currency-exchange-calculator";
 import { FlightsSearch } from "@/components/flights-search";
+import { buildTripHotelsUrl, buildTripPackagesUrl } from "@/lib/flights/trip";
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 
 const FAVORITES_KEY = "rutawaynow-favorites";
@@ -524,6 +525,26 @@ export function Dashboard() {
             <Icon name="plane" className="h-4 w-4" />
             {t("carousel.flights")}
           </button>
+          <a
+            href={buildTripPackagesUrl(lang)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={t("carousel.flightHotel")}
+            className="inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+          >
+            <Icon name="planeHotel" className="h-4 w-4" />
+            {t("carousel.flightHotel")}
+          </a>
+          <a
+            href={buildTripHotelsUrl(lang)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={t("carousel.hotels")}
+            className="inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+          >
+            <Icon name="bed" className="h-4 w-4" />
+            {t("carousel.hotels")}
+          </a>
         </Carousel>
       </nav>
 
