@@ -10,7 +10,7 @@ export interface FlightsSearchInput {
 
 const MARKETS: Record<Language, { host: string; currency: string; locale: string }> = {
   pt: {
-    host: "https://www.aviasales.com.br",
+    host: "https://www.aviasales.pt",
     currency: "BRL",
     locale: "pt",
   },
