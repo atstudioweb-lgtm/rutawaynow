@@ -301,7 +301,7 @@ export const pt = {
     swap: "Inverter origem e destino",
     searchPlaceholder: "Cidade ou aeroporto (ex.: São Paulo)",
     noResults: "Nenhum aeroporto encontrado.",
-    opensAt: "Os resultados abrem na Aviasales.",
+    opensAt: "Os resultados abrem no Trip.com.",
     fromRequired: "Informe a origem.",
     toRequired: "Informe o destino.",
     unknownAirport: "Não encontramos esse aeroporto. Escolha uma das sugestões.",

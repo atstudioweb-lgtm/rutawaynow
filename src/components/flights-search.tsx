@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/i18n/provider";
 import { Icon } from "@/components/icons";
 import { resolveAirport, type Airport } from "@/lib/flights/airports";
-import { buildAviasalesUrl } from "@/lib/flights/aviasales";
+import { buildTripUrl } from "@/lib/flights/trip";
 
 type TripType = "oneWay" | "roundTrip";
 
@@ -205,7 +205,7 @@ export function FlightsSearch() {
       return;
     }
 
-    const url = buildAviasalesUrl({
+    const url = buildTripUrl({
       origin: fromAirport.code,
       destination: toAirport.code,
       departDate,

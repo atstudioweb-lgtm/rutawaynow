@@ -303,7 +303,7 @@ export const en: Messages = {
     swap: "Swap origin and destination",
     searchPlaceholder: "City or airport (e.g. New York)",
     noResults: "No airport found.",
-    opensAt: "Results open at Aviasales.",
+    opensAt: "Results open at Trip.com.",
     fromRequired: "Enter the origin.",
     toRequired: "Enter the destination.",
     unknownAirport: "We couldn't find that airport. Choose one of the suggestions.",
