@@ -4,12 +4,22 @@ import { getStripe } from '@/lib/payments/stripe/client';
 import { prisma } from '@/lib/prisma';
 const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const headersList = await headers();
-  const signature = headersList.get('stripe-signature')!;
+  const signature = headersList.get('stripe-signature');
+
+  if (!signature) {
+    console.error('Stripe webhook received without stripe-signature header');
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+  }
+
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET is not configured in this environment; webhooks cannot be verified');
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+  }
 
   let event;
 
@@ -20,6 +30,8 @@ export async function POST(req: NextRequest) {
     console.error('Stripe webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
   }
+
+  console.log('Stripe webhook received:', event.id, event.type);
 
   try {
     switch (event.type) {
@@ -49,6 +61,8 @@ export async function POST(req: NextRequest) {
         await handleInvoicePaymentFailed(invoice);
         break;
       }
+      default:
+        console.log('Unhandled Stripe event type', event.type);
     }
 
     return NextResponse.json({ received: true });

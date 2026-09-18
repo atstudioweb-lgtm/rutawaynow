@@ -21,10 +21,18 @@ export async function POST(req: NextRequest) {
     const { auth } = await import('@/lib/auth');
     const session = await auth();
     console.log('Checkout session:', session?.user?.email, session?.user?.id);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Faça login para continuar — sem login o plano não pode ser creditado.' },
+        { status: 401 }
+      );
+    }
+
     const user = {
-      id: (session?.user as { id?: string } | null)?.id || 'user_123',
-      email: session?.user?.email || 'user@example.com',
-      name: session?.user?.name || 'Usuário Teste',
+      id: (session.user as { id: string }).id,
+      email: session.user.email || 'user@example.com',
+      name: session.user.name || 'Usuário',
     };
     console.log('Checkout user:', user.email, user.id);
 
