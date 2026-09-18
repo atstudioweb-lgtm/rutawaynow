@@ -3,6 +3,7 @@ export const pt = {
     name: "RutawayNow",
     tagline: "Planeje suas viagens",
     footer: "feito para a viagem perfeita",
+    faq: "FAQ",
   },
   common: {
     downloadRoteiro: "Baixar Roteiro",
@@ -320,6 +321,52 @@ export const pt = {
     previous: "Slide anterior",
     next: "Próximo slide",
     goTo: "Ir para o slide {n}",
+  },
+  faq: {
+    title: "Perguntas Frequentes",
+    subtitle: "Tudo o que você precisa saber sobre o RutawayNow, segurança e pagamentos.",
+    back: "Voltar ao início",
+    sections: [
+      {
+        id: "usage",
+        title: "Como usar",
+        items: [
+          { q: "Como faço para gerar um roteiro de viagem?", a: "Na página inicial, clique em “Planejar viagem” e siga os passos: destino, mês, orçamento e estilo de viagem. O roteiro é gerado automaticamente para você." },
+          { q: "Quantos roteiros cada plano inclui?", a: "Avulso: 1 roteiro (pagamento único). Quinzenal: 2 roteiros a cada quinzena. Mensal: 8 roteiros por mês." },
+          { q: "O que acontece quando eu atinjo o limite do meu plano?", a: "Você vê uma mensagem informando que o limite foi atingido. Para continuar gerando, aguarde o próximo período ou adquira outro plano na página de preços." },
+          { q: "Preciso de um plano para usar todos os recursos?", a: "A geração de roteiros exige um plano ativo. O checklist, o mapa e a tradução funcionam normalmente nos roteiros gerados." },
+        ],
+      },
+      {
+        id: "payments",
+        title: "Planos e pagamentos",
+        items: [
+          { q: "Quais formas de pagamento são aceitas?", a: "Aceitamos Stripe (cartões internacionais, Google Pay, Apple Pay e Link) e Mercado Pago (PIX, cartões brasileiros e boleto)." },
+          { q: "Em quais moedas posso pagar?", a: "Real (BRL), dólar (USD) e euro (EUR). Você escolhe a moeda na página de preços." },
+          { q: "Como funciona a renovação dos planos Quinzenal e Mensal?", a: "São assinaturas com cobrança recorrente: a cada período, uma nova cobrança é feita e o período é renovado automaticamente. O plano Avulso é um pagamento único." },
+          { q: "Como cancelo minha assinatura?", a: "Na página Conta, em Histórico, clique em Cancelar. Você mantém o acesso até o fim do período já pago." },
+          { q: "E se o pagamento falhar?", a: "O sistema tenta cobrar novamente. Se a assinatura não for renovada, o acesso é suspenso ao fim do período pago." },
+        ],
+      },
+      {
+        id: "security",
+        title: "Segurança e privacidade",
+        items: [
+          { q: "O site é seguro?", a: "Sim. As conexões usam HTTPS (criptografia TLS) e o acesso é protegido pelo login do Google (OAuth)." },
+          { q: "Vocês armazenam meus dados de cartão?", a: "Não. O pagamento acontece 100% nos ambientes seguros da Stripe e do Mercado Pago, certificados PCI-DSS. Nunca vemos nem guardamos dados do seu cartão." },
+          { q: "Quais dados vocês guardam?", a: "Sua conta Google (nome, e-mail e foto), os roteiros que você gera e os arquivos PDF. Seus dados ficam acessíveis apenas para você, na página Conta." },
+          { q: "Por que preciso entrar com Google para pagar?", a: "O pagamento é vinculado à sua conta para que os roteiros do plano sejam creditados corretamente para você." },
+        ],
+      },
+      {
+        id: "account",
+        title: "Conta",
+        items: [
+          { q: "Como vejo meu plano e histórico?", a: "Na página Conta você vê seu plano atual, roteiros e checklists salvos e o histórico de assinaturas." },
+          { q: "Onde encontro mais informações sobre segurança e pagamento?", a: "Está tudo resumido nas seções Planos e pagamentos e Segurança e privacidade desta página." },
+        ],
+      },
+    ],
   },
 };
 

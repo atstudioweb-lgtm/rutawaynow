@@ -697,8 +697,11 @@ export function Dashboard() {
         </div>
       </div>
 
-      <footer className="pt-6 text-center text-xs text-slate-400">
-        RutawayNow © 2026 · {t("app.footer")}
+      <footer className="flex flex-col items-center gap-2 pt-6 text-center text-xs text-slate-400">
+        <Link href="/faq" className="font-medium text-indigo-500 hover:text-indigo-700">
+          {t("app.faq")}
+        </Link>
+        <span>RutawayNow © 2026 · {t("app.footer")}</span>
       </footer>
 
       {checklist && checklistOpen && (

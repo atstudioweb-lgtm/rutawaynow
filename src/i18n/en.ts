@@ -5,6 +5,7 @@ export const en: Messages = {
     name: "RutawayNow",
     tagline: "Plan your trips",
     footer: "made for the perfect trip",
+    faq: "FAQ",
   },
   common: {
     downloadRoteiro: "Download Itinerary",
@@ -322,5 +323,51 @@ export const en: Messages = {
     previous: "Previous slide",
     next: "Next slide",
     goTo: "Go to slide {n}",
+  },
+  faq: {
+    title: "Frequently Asked Questions",
+    subtitle: "Everything you need to know about RutawayNow, security and payments.",
+    back: "Back to home",
+    sections: [
+      {
+        id: "usage",
+        title: "Getting started",
+        items: [
+          { q: "How do I generate a travel itinerary?", a: "On the home page, click “Plan a trip” and follow the steps: destination, month, budget and travel style. Your itinerary is generated automatically." },
+          { q: "How many itineraries does each plan include?", a: "Single: 1 itinerary (one-time payment). Fortnightly: 2 itineraries per fortnight. Monthly: 8 itineraries per month." },
+          { q: "What happens when I reach my plan limit?", a: "You'll see a message letting you know the limit was reached. To keep generating, wait for the next period or purchase another plan on the pricing page." },
+          { q: "Do I need a plan to use every feature?", a: "Generating itineraries requires an active plan. The checklist, map and translation work normally on the itineraries you generated." },
+        ],
+      },
+      {
+        id: "payments",
+        title: "Plans & payments",
+        items: [
+          { q: "Which payment methods do you accept?", a: "We accept Stripe (international cards, Google Pay, Apple Pay and Link) and Mercado Pago (PIX, Brazilian cards and boleto)." },
+          { q: "Which currencies can I pay in?", a: "Brazilian real (BRL), US dollar (USD) and euro (EUR). You pick the currency on the pricing page." },
+          { q: "How do the Fortnightly and Monthly plans renew?", a: "They are subscriptions with recurring billing: each period a new charge is made and your period renews automatically. The Single plan is a one-time payment." },
+          { q: "How do I cancel my subscription?", a: "On the Account page, under History, click Cancel. You keep access until the end of the period you already paid for." },
+          { q: "What if a payment fails?", a: "The system tries to charge again. If the subscription isn't renewed, access is suspended at the end of the paid period." },
+        ],
+      },
+      {
+        id: "security",
+        title: "Security & privacy",
+        items: [
+          { q: "Is the website secure?", a: "Yes. All connections use HTTPS (TLS encryption) and access is protected by Google sign-in (OAuth)." },
+          { q: "Do you store my card details?", a: "No. Payment happens entirely inside the secure Stripe and Mercado Pago environments, which are PCI-DSS certified. We never see or store your card details." },
+          { q: "What data do you keep?", a: "Your Google account (name, email and photo), the itineraries you generate and their PDF files. Your data is only accessible to you, on the Account page." },
+          { q: "Why do I need to sign in with Google to pay?", a: "The payment is linked to your account so the plan's itineraries are credited to you correctly." },
+        ],
+      },
+      {
+        id: "account",
+        title: "Account",
+        items: [
+          { q: "How do I see my plan and history?", a: "On the Account page you can see your current plan, saved itineraries and checklists, and your subscription history." },
+          { q: "Where can I find more information about security and payment?", a: "It's all summarized in the Plans & payments and Security & privacy sections of this page." },
+        ],
+      },
+    ],
   },
 };
