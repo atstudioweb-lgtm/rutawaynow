@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useI18n } from '@/i18n/provider';
-import { getAllPlans, Plan, formatPrice, getPriceForCurrency } from '@/config/pricing';
+import { getAllPlans, Plan } from '@/config/pricing';
 import { Button } from '@/components/ui/button';
 
 type Currency = 'BRL' | 'USD' | 'EUR';
@@ -22,20 +22,12 @@ export function PricingPlans() {
   const { t, lang } = useI18n();
   const [selectedProvider, setSelectedProvider] = useState<'stripe' | 'mercadopago'>('stripe');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [userCurrency, setUserCurrency] = useState<Currency>('BRL');
-
-  const plans = getAllPlans();
-
-  useEffect(() => {
+  const [userCurrency, setUserCurrency] = useState<Currency>(() => {
+    if (typeof window === 'undefined') return 'BRL';
     const saved = localStorage.getItem('rutawaynow-currency');
-    if (saved && ['BRL', 'USD', 'EUR'].includes(saved)) {
-      setUserCurrency(saved as Currency);
-    } else {
-      // Sync with app language
-      if (lang === 'en') setUserCurrency('USD');
-      else setUserCurrency('BRL');
-    }
-  }, [lang]);
+    if (saved && ['BRL', 'USD', 'EUR'].includes(saved)) return saved as Currency;
+    return lang === 'en' ? 'USD' : 'BRL';
+  });
 
   const currency = userCurrency;
 
@@ -67,7 +59,7 @@ export function PricingPlans() {
       const data = await response.json();
 
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
       } else {
         alert(data.error || 'Erro ao criar sessão de pagamento');
       }

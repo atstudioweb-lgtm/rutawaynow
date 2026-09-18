@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 import { getStripe } from '@/lib/payments/stripe/client';
 import { prisma } from '@/lib/prisma';
 const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
@@ -36,28 +37,28 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as any;
+        const session = event.data.object as Stripe.Checkout.Session;
         await handleCheckoutCompleted(session);
         break;
       }
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as any;
+        const subscription = event.data.object as Stripe.Subscription;
         await handleSubscriptionUpdated(subscription);
         break;
       }
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as any;
+        const subscription = event.data.object as Stripe.Subscription;
         await handleSubscriptionDeleted(subscription);
         break;
       }
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as any;
+        const invoice = event.data.object as Stripe.Invoice;
         await handleInvoicePaymentSucceeded(invoice);
         break;
       }
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as any;
+        const invoice = event.data.object as Stripe.Invoice;
         await handleInvoicePaymentFailed(invoice);
         break;
       }
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: any) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.client_reference_id;
   const planId = session.metadata?.plan_id;
   if (!userId || !planId) {
@@ -135,7 +136,7 @@ async function handleCheckoutCompleted(session: any) {
   console.log('Created subscription', { userId, planId });
 }
 
-async function handleSubscriptionUpdated(subscription: any) {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.user_id;
   const planId = subscription.metadata?.plan_id;
   const status = mapStripeStatus(subscription.status);
@@ -152,7 +153,7 @@ async function handleSubscriptionUpdated(subscription: any) {
   }
 }
 
-async function handleSubscriptionDeleted(subscription: any) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.user_id;
 
   console.log('Stripe subscription deleted:', { userId });
@@ -164,8 +165,8 @@ async function handleSubscriptionDeleted(subscription: any) {
   console.log('Marked Stripe subscription expired (deleted)', { stripeSubscriptionId: subscription.id });
 }
 
-async function handleInvoicePaymentSucceeded(invoice: any) {
-  const subscriptionId = invoice.subscription as string | null;
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
   console.log('Invoice payment succeeded:', { subscriptionId, billingReason: invoice.billing_reason });
 
   // Only renewal invoices ("subscription_cycle") extend the plan. The initial
@@ -210,9 +211,15 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
   console.log('Renewed subscription from invoice', { userId: sub.userId, planId: sub.planId, expiryAt: expiry.toISOString(), invoiceId: invoice.id });
 }
 
-async function handleInvoicePaymentFailed(invoice: any) {
-  const subscriptionId = invoice.subscription;
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
   console.log('Invoice payment failed:', { subscriptionId });
+}
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const sub = invoice.parent?.subscription_details?.subscription;
+  if (!sub) return null;
+  return typeof sub === 'string' ? sub : sub.id ?? null;
 }
 
 function mapStripeStatus(status: string): string {

@@ -6,7 +6,21 @@ const PLAN_NAMES: Record<string, Record<string,string>> = {
   en: { single: 'Single', fortnightly: 'Fortnightly', monthly: 'Monthly' }
 };
 
-export async function getServerPlanStatus(userId: string, lang: string = 'pt') {
+export type ServerPlanStatus = {
+  hasActivePlan: boolean;
+  planType: 'single' | 'fortnightly' | 'monthly' | null;
+  planName: string;
+  remaining: number;
+  max: number;
+  expiry: Date | null;
+  canGenerate: boolean;
+  message: string;
+  subscriptionId?: string;
+  periodKey?: string;
+  effectiveUsed?: number;
+};
+
+export async function getServerPlanStatus(userId: string, lang: string = 'pt'): Promise<ServerPlanStatus> {
   const l = lang === 'en' ? 'en' : 'pt';
   const now = new Date();
   let subs = await prisma.subscription.findMany({
@@ -66,15 +80,15 @@ export async function getServerPlanStatus(userId: string, lang: string = 'pt') {
   if (sub.planId === 'single') message = remaining>0 ? msgs.singleAvail : msgs.singleUsed;
   else message = canGenerate ? msgs.available : msgs.limit;
 
-  return { hasActivePlan:true, planType: sub.planId as any, planName: name, remaining, max, expiry: sub.expiryAt, canGenerate, message, subscriptionId: sub.id, periodKey: currentPeriodKey, effectiveUsed };
+  return { hasActivePlan:true, planType: sub.planId as 'single' | 'fortnightly' | 'monthly', planName: name, remaining, max, expiry: sub.expiryAt, canGenerate, message, subscriptionId: sub.id, periodKey: currentPeriodKey, effectiveUsed };
 }
 
 export async function incrementServerUsage(userId: string) {
   const status = await getServerPlanStatus(userId);
-  if (!status.canGenerate || !(status as any).subscriptionId) return false;
-  const subId = (status as any).subscriptionId as string;
-  const currentPeriodKey = (status as any).periodKey as string;
-  const used = (status as any).effectiveUsed as number;
+  if (!status.canGenerate || !status.subscriptionId) return false;
+  const subId = status.subscriptionId;
+  const currentPeriodKey = status.periodKey ?? '';
+  const used = status.effectiveUsed ?? 0;
   await prisma.subscription.update({
     where: { id: subId },
     data: { usedCount: used + 1, periodKey: currentPeriodKey },

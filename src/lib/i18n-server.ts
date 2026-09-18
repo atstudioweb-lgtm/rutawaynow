@@ -3,12 +3,7 @@ import { en } from '@/i18n/en';
 
 export type Language = 'pt' | 'en';
 
-const messages: Record<Language, Record<string, any>> = {
-  pt,
-  en,
-};
-
-function resolveMessage(messages: Record<string, any>, key: string): unknown {
+function resolveMessage(messages: Record<string, unknown>, key: string): unknown {
   return key.split('.').reduce<unknown>((current, part) => {
     if (
       current != null &&
