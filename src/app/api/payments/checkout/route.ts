@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
-import { Plan, getAllPlans } from '@/config/pricing';
+import { getAllPlans } from '@/config/pricing';
 import { getTranslation } from '@/lib/i18n-server';
 import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, currency, provider, successUrl, cancelUrl, lang } = body;
+    const { planId, currency, provider, cancelUrl, lang } = body;
 
     // Validate plan
     const plans = getAllPlans();
@@ -40,12 +40,6 @@ export async function POST(req: NextRequest) {
 
     // Create translation function for the requested language
     const { t } = getTranslation(lang as 'pt' | 'en');
-
-    // Translate plan name and description for Stripe checkout
-    const planName = t(plan.nameKey);
-    const planDescription = t(plan.descriptionKey);
-    const itineraryText = t(plan.itineraries > 1 ? 'pricing.itineraries' : 'pricing.itinerary');
-    const intervalText = plan.interval ? ` / ${t(plan.interval === 'month' ? 'pricing.month' : 'pricing.fortnight')}` : '';
 
     if (provider === 'stripe') {
       const successUrl = `${baseUrl}/checkout/success?plan_id=${plan.id}&provider=${provider}&session_id={CHECKOUT_SESSION_ID}`;

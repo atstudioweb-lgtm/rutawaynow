@@ -13,32 +13,6 @@ const FREEAI_API_URL = "https://api.free.ai/v1/chat/completions";
 const DEFAULT_MODEL = "qwen7b";
 const BUDGET_LEVELS: BudgetLevel[] = ["baixo", "medio", "alto"];
 const API_LANGS: ApiLang[] = ["pt", "en"];
-const PLAN_LIMITS = {
-  single: 1,
-  fortnightly: 3,
-  monthly: 10,
-} as const;
-
-function validatePlan(plan: string | null, planExpiry: string | null): { valid: boolean; message?: string; remaining: number } {
-  if (!plan || !planExpiry) {
-    return { valid: false, message: 'Nenhum plano ativo. Adquira um plano para gerar roteiros.', remaining: 0 };
-  }
-
-  const now = new Date();
-
-  if (new Date(planExpiry) < now) {
-    return { valid: false, message: 'Seu plano expirou. Renove para continuar gerando roteiros.', remaining: 0 };
-  }
-
-  const planType = plan as 'single' | 'fortnightly' | 'monthly';
-  const maxItineraries = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || 0;
-
-  if (plan === 'single') {
-    return { valid: true, message: undefined, remaining: 1 };
-  }
-
-  return { valid: true, message: undefined, remaining: PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || 0 };
-}
 
 const SYSTEM_PROMPTS: Record<ApiLang, string> = {
   pt: `Você é um especialista em planejamento de viagens do aplicativo "RutawayNow".

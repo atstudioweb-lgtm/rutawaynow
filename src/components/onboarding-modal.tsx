@@ -147,7 +147,6 @@ export function OnboardingModal({
           ? budget !== null
           : true;
   const [serverCanGenerate, setServerCanGenerate] = useState<boolean | null>(null);
-  const [serverMessage, setServerMessage] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -157,18 +156,16 @@ export function OnboardingModal({
           const data = await res.json();
           if (!cancelled) {
             setServerCanGenerate(!!data.status?.canGenerate);
-            setServerMessage(data.status?.message || null);
           }
         } else if (!cancelled) {
           setServerCanGenerate(false);
         }
-      } catch { if (!cancelled) { setServerCanGenerate(false); setServerMessage(null); } }
+      } catch { if (!cancelled) { setServerCanGenerate(false); } }
     })();
     return () => { cancelled = true; };
   }, [lang]);
   // Always use DB when logged in (no localStorage fallback)
   const canGenerate = styles.length > 0 && (serverCanGenerate ?? false);
-  const planStatus = { canGenerate: serverCanGenerate ?? false, message: serverMessage } as unknown as ReturnType<typeof getPlanStatus>;
   const totalTravelers = adults + teens + children;
 
   const daysLabel = days === 1 ? t("onboarding.dayOne") : t("onboarding.dayOther");

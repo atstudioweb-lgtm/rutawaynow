@@ -67,7 +67,6 @@ export function getPlanStatus(lang: string = 'pt'): PlanStatus {
 
   const plan = localStorage.getItem('rutawaynow-plan');
   const expiry = localStorage.getItem('rutawaynow-plan-expiry');
-  const provider = localStorage.getItem('rutawaynow-plan-provider');
 
   if (!plan || !expiry) {
     return {

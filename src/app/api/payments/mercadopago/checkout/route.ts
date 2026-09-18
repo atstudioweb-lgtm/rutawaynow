@@ -6,7 +6,7 @@ import { getBaseUrl } from '@/lib/base-url';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { planId, successUrl, cancelUrl, provider } = body;
+    const { planId, cancelUrl, provider } = body;
 
     const plans = getAllPlans();
     const plan = plans.find(p => p.id === planId);

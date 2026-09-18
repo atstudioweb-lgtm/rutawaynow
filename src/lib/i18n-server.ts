@@ -17,8 +17,6 @@ function resolveMessage(messages: Record<string, unknown>, key: string): unknown
 }
 
 export function getTranslation(lang: Language) {
-  const messages = lang === 'en' ? en : pt;
-
   function t(key: string, params?: Record<string, string | number>): string {
     const value = resolveMessage(lang === 'en' ? en : pt, key);
     if (typeof value !== 'string') return key;

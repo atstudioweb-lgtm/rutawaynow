@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
     "@tailwindcss/oxide-win32-x64-msvc",
     "@next/swc-win32-x64-msvc",
   ],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+    ],
+  },
 };
 
 export default nextConfig;

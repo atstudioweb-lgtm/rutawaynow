@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useI18n } from '@/i18n/provider';
 import { getAllPlans, Plan } from '@/config/pricing';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ function getCurrencySymbol(currency: 'BRL' | 'USD' | 'EUR'): string {
 
 export function PricingPlans() {
   const { t, lang } = useI18n();
+  const router = useRouter();
   const [selectedProvider, setSelectedProvider] = useState<'stripe' | 'mercadopago'>('stripe');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [userCurrency, setUserCurrency] = useState<Currency>(() => {
@@ -77,7 +79,7 @@ export function PricingPlans() {
         {/* Back Button */}
         <div className="mb-8">
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

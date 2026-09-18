@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { put } from "@vercel/blob";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const list = await prisma.itinerary.findMany({ where: { userId: (session.user as { id: string }).id }, orderBy: { createdAt: "desc" } });
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
-  const { pdfBase64, itineraryId, ...rest } = body as { pdfBase64?: string; itineraryId?: string } & Record<string, unknown>;
+  const { pdfBase64, itineraryId } = body as { pdfBase64?: string; itineraryId?: string };
   let pdfUrl: string | undefined;
   let pdfBlobKey: string | undefined;
   if (pdfBase64 && itineraryId) {

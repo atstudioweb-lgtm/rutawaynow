@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const list = await prisma.checklist.findMany({ where: { userId: (session.user as { id: string }).id }, orderBy: { createdAt: "desc" }, include: { itinerary: { select: { destination: true } } } });
@@ -24,6 +24,6 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { checklistId, checked } = body as { checklistId: string; checked: unknown };
   if (!checklistId) return NextResponse.json({ error: "checklistId required" }, { status: 400 });
-  const updated = await prisma.checklist.updateMany({ where: { id: checklistId, userId: (session.user as { id: string }).id }, data: { checked: checked as object } });
+  await prisma.checklist.updateMany({ where: { id: checklistId, userId: (session.user as { id: string }).id }, data: { checked: checked as object } });
   return NextResponse.json({ ok: true });
 }

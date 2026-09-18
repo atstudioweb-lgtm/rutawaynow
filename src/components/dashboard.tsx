@@ -12,6 +12,7 @@ import { generateTripPdf } from "@/lib/pdf";
 import { useI18n } from "@/i18n/provider";
 import { LANGUAGES } from "@/i18n/languages";
 import { useSession, signIn } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import type {
   Checklist,
@@ -484,7 +485,7 @@ export function Dashboard() {
           <LanguageSwitcher />
           {status === "authenticated" ? (
             <Link href="/account" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-xs font-bold text-white overflow-hidden" title="Minha conta">
-              {session?.user?.image ? <img src={session.user.image} alt="" className="h-9 w-9 rounded-full object-cover" /> : (session?.user?.name?.[0] ?? "U")}
+              {session?.user?.image ? <Image src={session.user.image} alt="" width={36} height={36} className="h-9 w-9 rounded-full object-cover" /> : (session?.user?.name?.[0] ?? "U")}
             </Link>
           ) : (
             <button onClick={() => signIn("google", { callbackUrl: "/account" })} className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700">Entrar</button>

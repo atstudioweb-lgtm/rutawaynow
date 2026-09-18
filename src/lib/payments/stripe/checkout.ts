@@ -19,7 +19,7 @@ export interface CreateCheckoutParams {
 }
 
 export async function createStripeCheckoutSession(params: CreateCheckoutParams) {
-  const { plan, currency, userId, userEmail, userName, successUrl, cancelUrl, lang, planName, planDescription, itineraryText, intervalText } = params;
+  const { plan, currency, userId, userEmail, successUrl, cancelUrl, lang, planName, itineraryText, intervalText } = params;
 
   const amount = getPriceForCurrency(plan, currency);
 

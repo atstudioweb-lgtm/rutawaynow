@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { generateTripPdf } from "@/lib/pdf";
 import { mapTripResult } from "@/data/trip";
 import { useI18n } from "@/i18n/provider";
-import type { Roteiro, Checklist } from "@/types/itinerary";
+import type { Roteiro } from "@/types/itinerary";
 
 type Sub = { id: string; planId: string; status: string; expiryAt: string; usedCount: number; maxItineraries: number; provider: string };
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
@@ -28,18 +28,18 @@ export default function AccountPage() {
   const [checks, setChecks] = useState<Check[]>([]);
   const [planStatus, setPlanStatus] = useState<{ hasActivePlan?: boolean; remaining: number; max: number; planName: string; message: string } | null>(null);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     fetch(`/api/user/subscriptions?lang=${lang}`, { cache: "no-store" }).then(r=>r.json()).then(d=>{ setSubs(d.subscriptions||[]); setPlanStatus(d.status); });
     fetch("/api/user/itineraries", { cache: "no-store" }).then(r=>r.json()).then(setIts);
     fetch("/api/user/checklists", { cache: "no-store" }).then(r=>r.json()).then(setChecks).catch(()=>{});
-  };
+  }, [lang]);
   useEffect(() => {
     if (status !== "authenticated") return;
     refresh();
     const onFocus = () => refresh();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [status, lang]);
+  }, [status, refresh]);
 
   const handlePdf = async (it: It) => {
     if (it.pdfUrl) { window.open(it.pdfUrl, "_blank"); return; }
