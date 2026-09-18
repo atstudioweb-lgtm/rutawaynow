@@ -71,6 +71,7 @@ model Subscription {
   periodKey      String? // YYYY-MM or fortnight number for period tracking
   stripeSessionId String? @unique
   stripeSubscriptionId String? @unique
+  stripeLastInvoiceId String?
   mercadoPagoId  String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

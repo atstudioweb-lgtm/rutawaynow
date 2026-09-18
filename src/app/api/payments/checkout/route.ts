@@ -3,6 +3,7 @@ import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
 import { getTranslation } from '@/lib/i18n-server';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     };
     console.log('Checkout user:', user.email, user.id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
 
     // Create translation function for the requested language
     const { t } = getTranslation(lang as 'pt' | 'en');

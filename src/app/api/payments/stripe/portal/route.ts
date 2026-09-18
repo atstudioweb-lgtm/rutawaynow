@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStripePortalSession } from '@/lib/payments/stripe/checkout';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,11 +11,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Customer ID obrigatório' }, { status: 400 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
     const result = await createStripePortalSession(
       customerId,
-      returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/account`
+      returnUrl || `${getBaseUrl()}/account`
     );
 
     return NextResponse.json({ url: result.url });

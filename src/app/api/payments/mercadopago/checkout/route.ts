@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMercadoPagoPreference } from '@/lib/payments/mercadopago/checkout';
 import { getAllPlans } from '@/config/pricing';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
       : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste' };
     console.log('Mercado Pago checkout user:', user.email, user.id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
 
     const result = await createMercadoPagoPreference({
       plan,

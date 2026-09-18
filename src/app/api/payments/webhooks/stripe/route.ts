@@ -124,16 +124,18 @@ async function handleCheckoutCompleted(session: any) {
 async function handleSubscriptionUpdated(subscription: any) {
   const userId = subscription.metadata?.user_id;
   const planId = subscription.metadata?.plan_id;
-  const status = subscription.status;
+  const status = mapStripeStatus(subscription.status);
 
   console.log('Stripe subscription updated:', { userId, planId, status });
 
-  // TODO: Update subscription in database
-  // await db.updateUserSubscription(userId, {
-  //   status: mapStripeStatus(status),
-  //   stripeSubscriptionId: subscription.id,
-  //   currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-  // });
+  // Keep local state in sync: any non-active Stripe status expires the entitlement.
+  if (status !== 'active') {
+    await prisma.subscription.updateMany({
+      where: { stripeSubscriptionId: subscription.id },
+      data: { status: 'expired' },
+    });
+    console.log('Marked Stripe subscription expired', { stripeSubscriptionId: subscription.id, status });
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: any) {
@@ -141,16 +143,57 @@ async function handleSubscriptionDeleted(subscription: any) {
 
   console.log('Stripe subscription deleted:', { userId });
 
-  // TODO: Update user subscription in database
-  // await db.updateUserSubscription(userId, {
-  //   status: 'canceled',
-  //   stripeSubscriptionId: null,
-  // });
+  await prisma.subscription.updateMany({
+    where: { stripeSubscriptionId: subscription.id },
+    data: { status: 'expired' },
+  });
+  console.log('Marked Stripe subscription expired (deleted)', { stripeSubscriptionId: subscription.id });
 }
 
 async function handleInvoicePaymentSucceeded(invoice: any) {
-  const subscriptionId = invoice.subscription;
-  console.log('Invoice payment succeeded:', { subscriptionId });
+  const subscriptionId = invoice.subscription as string | null;
+  console.log('Invoice payment succeeded:', { subscriptionId, billingReason: invoice.billing_reason });
+
+  // Only renewal invoices ("subscription_cycle") extend the plan. The initial
+  // invoice ("subscription_create") is already credited by checkout.session.completed.
+  if (invoice.billing_reason !== 'subscription_cycle') {
+    console.log('Skipping non-renewal invoice', { invoiceId: invoice.id, billingReason: invoice.billing_reason });
+    return;
+  }
+  if (!subscriptionId) {
+    console.warn('Renewal invoice without subscription id', invoice.id);
+    return;
+  }
+
+  const sub = await prisma.subscription.findUnique({ where: { stripeSubscriptionId: subscriptionId } });
+  if (!sub || sub.planId === 'single') {
+    console.warn('No renew-able local subscription for invoice', { invoiceId: invoice.id, subscriptionId });
+    return;
+  }
+
+  // Idempotency: skip if this same invoice already extended the period.
+  if (sub.stripeLastInvoiceId === invoice.id) {
+    console.log('Renewal invoice already applied, skipping', { subscriptionId: sub.id, invoiceId: invoice.id });
+    return;
+  }
+
+  // Extend from max(now, current expiry) so an early/redelivered invoice never shortens the period.
+  const now = new Date();
+  const base = sub.expiryAt > now ? sub.expiryAt : now;
+  const expiry = new Date(base);
+  if (sub.planId === 'fortnightly') expiry.setDate(expiry.getDate() + 14);
+  else if (sub.planId === 'monthly') expiry.setMonth(expiry.getMonth() + 1);
+  else return;
+
+  const periodKey = sub.planId === 'monthly'
+    ? now.toISOString().slice(0, 7)
+    : Math.floor(Date.now() / (14 * 24 * 60 * 60 * 1000)).toString();
+
+  await prisma.subscription.update({
+    where: { id: sub.id },
+    data: { status: 'active', expiryAt: expiry, usedCount: 0, periodKey, stripeLastInvoiceId: invoice.id },
+  });
+  console.log('Renewed subscription from invoice', { userId: sub.userId, planId: sub.planId, expiryAt: expiry.toISOString(), invoiceId: invoice.id });
 }
 
 async function handleInvoicePaymentFailed(invoice: any) {

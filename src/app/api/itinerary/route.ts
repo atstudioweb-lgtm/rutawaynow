@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { extractJson } from "@/utils/extractJson";
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
+import { getBaseUrl } from "@/lib/base-url";
 import type {
   ApiLang,
   BudgetLevel,
@@ -335,7 +336,7 @@ export async function POST(request: Request) {
             headers: {
               Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
               "Content-Type": "application/json",
-              "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://rutawaynow.vercel.app",
+              "HTTP-Referer": getBaseUrl(),
               "X-Title": "RutawayNow",
             },
             body: JSON.stringify({

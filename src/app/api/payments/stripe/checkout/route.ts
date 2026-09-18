@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe/checkout';
 import { Plan, getAllPlans } from '@/config/pricing';
 import { getTranslation } from '@/lib/i18n-server';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       : { id: 'user_123', email: 'user@example.com', name: 'Usuário Teste' };
     console.log('Stripe checkout user:', user.email, user.id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
 
     const { t } = getTranslation('pt');
 

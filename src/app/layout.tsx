@@ -11,9 +11,25 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "RutawayNow — Planeje suas viagens",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://rutawaynow.com"),
+  title: {
+    default: "RutawayNow — Planeje suas viagens",
+    template: "%s | RutawayNow",
+  },
   description:
     "Planeje, organize e compartilhe seus roteiros de viagem com o RutawayNow.",
+  openGraph: {
+    siteName: "RutawayNow",
+    title: "RutawayNow — Planeje suas viagens",
+    description:
+      "Planeje, organize e compartilhe seus roteiros de viagem com o RutawayNow.",
+    locale: "pt_BR",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

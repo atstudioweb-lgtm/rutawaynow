@@ -1,6 +1,7 @@
 import { preference, preApprovalPlan, preApproval, payment } from './client';
 import { Plan, getPriceForCurrency } from '@/config/pricing';
 import { getTranslation } from '@/lib/i18n-server';
+import { getBaseUrl } from '@/lib/base-url';
 
 export interface CreateMercadoPagoParams {
   plan: Plan;
@@ -55,7 +56,7 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
     },
     auto_return: 'approved',
     external_reference: `${userId}|${plan.id}`,
-    notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhooks/mercadopago`,
+    notification_url: `${getBaseUrl()}/api/payments/webhooks/mercadopago`,
     metadata: {
       user_id: userId,
       plan_id: params.plan.id,
@@ -95,7 +96,7 @@ export async function createMercadoPagoPreference(params: CreateMercadoPagoParam
       status: 'pending',
       external_reference: `${userId}|${plan.id}`,
       back_url: successUrl,
-      notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhooks/mercadopago`,
+      notification_url: `${getBaseUrl()}/api/payments/webhooks/mercadopago`,
     };
 
     const preApprovalResult = await preApproval.create({ body: preApprovalData });
