@@ -8,7 +8,7 @@ import {
 } from '@/lib/payments/mercadopago/webhooks';
 import { getMercadoPagoPayment, getMercadoPagoSubscription } from '@/lib/payments/mercadopago/checkout';
 
-const PLAN_LIMITS_MP: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
+const PLAN_LIMITS_MP: Record<string, number> = { single: 1, fortnightly: 2, monthly: 8 };
 
 interface MercadoPagoWebhookPayload {
   type?: string;

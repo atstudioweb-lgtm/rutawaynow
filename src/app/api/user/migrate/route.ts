@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
+const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 2, monthly: 8 };
 
 export async function POST(req: NextRequest) {
   const session = await auth();

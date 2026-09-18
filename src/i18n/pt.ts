@@ -223,7 +223,7 @@ export const pt = {
     fortnightly: {
       name: "Quinzenal",
       description: "Para quem viaja frequentemente",
-      feature1: "3 roteiros por mês",
+      feature1: "2 roteiros por quinzena",
       feature2: "Checklist de viagem",
       feature3: "Tradução automática",
       feature4: "PDF para download",
@@ -232,7 +232,7 @@ export const pt = {
     monthly: {
       name: "Mensal",
       description: "Para viajantes assíduos e famílias",
-      feature1: "10 roteiros por mês",
+      feature1: "8 roteiros por mês",
       feature2: "Checklist de viagem",
       feature3: "Tradução automática",
       feature4: "PDF para download",

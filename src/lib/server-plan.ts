@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const PLAN_LIMITS = { single: 1, fortnightly: 3, monthly: 10 } as const;
+const PLAN_LIMITS = { single: 1, fortnightly: 2, monthly: 8 } as const;
 const PLAN_NAMES: Record<string, Record<string,string>> = {
   pt: { single: 'Avulso', fortnightly: 'Quinzenal', monthly: 'Mensal' },
   en: { single: 'Single', fortnightly: 'Fortnightly', monthly: 'Monthly' }

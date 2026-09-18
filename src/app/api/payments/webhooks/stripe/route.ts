@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripe } from '@/lib/payments/stripe/client';
 import { prisma } from '@/lib/prisma';
-const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 3, monthly: 10 };
+const PLAN_LIMITS: Record<string, number> = { single: 1, fortnightly: 2, monthly: 8 };
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 

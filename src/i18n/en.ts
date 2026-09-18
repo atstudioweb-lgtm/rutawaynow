@@ -225,7 +225,7 @@ export const en: Messages = {
     fortnightly: {
       name: "Fortnightly",
       description: "For frequent travelers",
-      feature1: "3 itineraries per fortnight",
+      feature1: "2 itineraries per fortnight",
       feature2: "Travel checklist",
       feature3: "Automatic translation",
       feature4: "PDF download",
@@ -234,7 +234,7 @@ export const en: Messages = {
     monthly: {
       name: "Monthly",
       description: "For avid travelers and families",
-      feature1: "10 itineraries per month",
+      feature1: "8 itineraries per month",
       feature2: "Travel checklist",
       feature3: "Automatic translation",
       feature4: "PDF download",

@@ -38,7 +38,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'fortnightly',
     nameKey: 'pricing.fortnightly.name',
     descriptionKey: 'pricing.fortnightly.description',
-    itineraries: 3,
+    itineraries: 2,
     interval: 'fortnight',
     prices: {
       BRL: 19.90,
@@ -58,7 +58,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'monthly',
     nameKey: 'pricing.monthly.name',
     descriptionKey: 'pricing.monthly.description',
-    itineraries: 10,
+    itineraries: 8,
     interval: 'month',
     prices: {
       BRL: 34.90,
