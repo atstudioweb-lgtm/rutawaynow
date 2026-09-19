@@ -25,18 +25,18 @@ const MARKETS: Record<Language, { host: string; locale: string; currency: string
 export interface CabinOption {
   value: string;
   labelKey: string;
-  flightsClass: string;
-  packagesClassType: string;
+  class: string;
 }
 
-// Trip.com cabin options shared by the Flights and Flight + Hotel forms.
+// Cabin codes shared by Flights (`class`) and Flight + Hotel (`classType`)
+// on Trip.com: single letters for one class, concatenated for combinations.
 export const CABIN_OPTIONS: CabinOption[] = [
-  { value: "economy", labelKey: "economy", flightsClass: "y", packagesClassType: "y" },
-  { value: "economyPremium", labelKey: "economyPremium", flightsClass: "y,s", packagesClassType: "ys" },
-  { value: "premiumEconomy", labelKey: "premiumEconomy", flightsClass: "s", packagesClassType: "s" },
-  { value: "businessFirst", labelKey: "businessFirst", flightsClass: "c,f", packagesClassType: "cf" },
-  { value: "business", labelKey: "business", flightsClass: "c", packagesClassType: "c" },
-  { value: "first", labelKey: "first", flightsClass: "f", packagesClassType: "f" },
+  { value: "economy", labelKey: "economy", class: "y" },
+  { value: "economyPremium", labelKey: "economyPremium", class: "ys" },
+  { value: "premiumEconomy", labelKey: "premiumEconomy", class: "s" },
+  { value: "businessFirst", labelKey: "businessFirst", class: "cf" },
+  { value: "business", labelKey: "business", class: "c" },
+  { value: "first", labelKey: "first", class: "f" },
 ];
 
 export function cabinByValue(value: string): CabinOption {
@@ -61,7 +61,7 @@ export function buildTripUrl({
   params.set("ddate", departDate);
   params.set("triptype", returnDate ? "rt" : "ow");
   if (returnDate) params.set("rdate", returnDate);
-  params.set("class", cabinByValue(cabin).flightsClass);
+  params.set("class", cabinByValue(cabin).class);
   params.set("quantity", "1");
   params.set("locale", market.locale);
   params.set("curr", market.currency);

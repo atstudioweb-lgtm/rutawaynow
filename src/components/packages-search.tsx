@@ -90,7 +90,7 @@ export function PackagesSearch() {
       children,
       rooms,
       isOversea: fromAirport.country !== toAirport.country,
-      classType: CABIN_OPTIONS.find((option) => option.value === cabin)?.packagesClassType ?? "ys",
+      classType: CABIN_OPTIONS.find((option) => option.value === cabin)?.class ?? "y",
       lang,
     });
     window.open(url, "_blank", "noopener");
