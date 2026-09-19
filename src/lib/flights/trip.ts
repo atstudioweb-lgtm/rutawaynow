@@ -31,12 +31,12 @@ export interface CabinOption {
 
 // Trip.com cabin options shared by the Flights and Flight + Hotel forms.
 export const CABIN_OPTIONS: CabinOption[] = [
-  { value: "economy", labelKey: "economy", flightsClass: "y", packagesClassType: "ys" },
-  { value: "economyPremium", labelKey: "economyPremium", flightsClass: "y,s", packagesClassType: "ys,ps" },
-  { value: "premiumEconomy", labelKey: "premiumEconomy", flightsClass: "s", packagesClassType: "ps" },
-  { value: "businessFirst", labelKey: "businessFirst", flightsClass: "c,f", packagesClassType: "cs,fs" },
-  { value: "business", labelKey: "business", flightsClass: "c", packagesClassType: "cs" },
-  { value: "first", labelKey: "first", flightsClass: "f", packagesClassType: "fs" },
+  { value: "economy", labelKey: "economy", flightsClass: "y", packagesClassType: "y" },
+  { value: "economyPremium", labelKey: "economyPremium", flightsClass: "y,s", packagesClassType: "ys" },
+  { value: "premiumEconomy", labelKey: "premiumEconomy", flightsClass: "s", packagesClassType: "s" },
+  { value: "businessFirst", labelKey: "businessFirst", flightsClass: "c,f", packagesClassType: "cf" },
+  { value: "business", labelKey: "business", flightsClass: "c", packagesClassType: "c" },
+  { value: "first", labelKey: "first", flightsClass: "f", packagesClassType: "f" },
 ];
 
 export function cabinByValue(value: string): CabinOption {
