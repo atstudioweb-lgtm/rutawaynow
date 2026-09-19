@@ -22,7 +22,8 @@ import type {
 import { Carousel } from "@/components/ui/carousel";
 import { CurrencyExchangeCalculator } from "@/components/currency-exchange-calculator";
 import { FlightsSearch } from "@/components/flights-search";
-import { buildTripHotelsUrl, buildTripPackagesUrl } from "@/lib/flights/trip";
+import { HotelsSearch } from "@/components/hotels-search";
+import { PackagesSearch } from "@/components/packages-search";
 type It = { id: string; destination: string; month: string; days: number; budget: string; lang: string; roteiro: Roteiro; pdfUrl?: string; createdAt: string };
 
 const FAVORITES_KEY = "rutawaynow-favorites";
@@ -56,6 +57,8 @@ export function Dashboard() {
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [showExchange, setShowExchange] = useState(false);
   const [showFlights, setShowFlights] = useState(false);
+  const [showHotels, setShowHotels] = useState(false);
+  const [showPackages, setShowPackages] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
   const [isTranslatingChecklist, setIsTranslatingChecklist] = useState(false);
   const [checklistError, setChecklistError] = useState<string | null>(null);
@@ -526,26 +529,34 @@ export function Dashboard() {
             <Icon name="plane" className="h-4 w-4" />
             {t("carousel.flights")}
           </button>
-          <a
-            href={buildTripPackagesUrl(lang)}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setShowPackages((value) => !value)}
+            aria-pressed={showPackages}
             title={t("carousel.flightHotel")}
-            className="inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold shadow-sm transition ${
+              showPackages
+                ? "border-indigo-300 bg-indigo-600 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            }`}
           >
             <Icon name="planeHotel" className="h-4 w-4" />
             {t("carousel.flightHotel")}
-          </a>
-          <a
-            href={buildTripHotelsUrl(lang)}
-            target="_blank"
-            rel="noopener noreferrer"
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowHotels((value) => !value)}
+            aria-pressed={showHotels}
             title={t("carousel.hotels")}
-            className="inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold shadow-sm transition ${
+              showHotels
+                ? "border-indigo-300 bg-indigo-600 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+            }`}
           >
             <Icon name="bed" className="h-4 w-4" />
             {t("carousel.hotels")}
-          </a>
+          </button>
         </Carousel>
       </nav>
 
@@ -558,6 +569,18 @@ export function Dashboard() {
       {showFlights && (
         <section className="mb-6 sm:mb-8" aria-label={t("flights.title")}>
           <FlightsSearch />
+        </section>
+      )}
+
+      {showHotels && (
+        <section className="mb-6 sm:mb-8" aria-label={t("hotels.title")}>
+          <HotelsSearch />
+        </section>
+      )}
+
+      {showPackages && (
+        <section className="mb-6 sm:mb-8" aria-label={t("packages.title")}>
+          <PackagesSearch />
         </section>
       )}
 
